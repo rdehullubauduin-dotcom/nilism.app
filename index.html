@@ -74,39 +74,13 @@
     display: block;
   }
 
-  .gate {
-    position: fixed;
-    inset: 0;
-    background: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    overflow: hidden;
-  }
-
-  .gate.hidden {
-    display: none;
-  }
-
-  .gate img {
-    height: 100dvh;
-    width: auto;
-    max-width: none;
-    object-fit: contain;
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
-    display: block;
-  }
-
   @supports (height: 100svh) {
-    .reader, .page, .gate { height: 100svh; }
-    .page img, .gate img { height: 100svh; }
+    .reader, .page { height: 100svh; }
+    .page img { height: 100svh; }
   }
 
   @media (display-mode: browser) {
-    .page img, .gate img {
+    .page img {
       height: 110dvh;
       width: auto;
       max-width: none;
@@ -116,11 +90,6 @@
 </head>
 
 <body>
-
-<!-- Toon de afbeelding als poortscherm als er geen toegang is -->
-<div id="gate" class="gate">
-  <img src="/pages/PWA.png" alt="native app only available in apple app store and google play store" loading="eager" decoding="async">
-</div>
 
 <main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
 
@@ -135,15 +104,9 @@
   }
 
   const hasAccess = localStorage.getItem('nil_access') === 'true';
-  const gate = document.getElementById('gate');
   const reader = document.getElementById('reader');
 
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
-
-  if (hasAccess) {
-    gate.classList.add('hidden');
-    initReader();
-  }
 
   async function checkPageExists(pageNumber) {
     const num = String(pageNumber).padStart(3, '0');
@@ -158,8 +121,13 @@
   async function initReader() {
     reader.innerHTML = '';
     
-    // 1. Pagina 001PWA komt altijd vast als eerste
-    appendPage(1, 0, true);
+    if (!hasAccess) {
+      // PROEFVERSIE: Start met PWA.png als eerste pagina, daarna willekeurig vanaf 001PWA
+      appendCustomPage('/pages/PWA.png', 'Recenter.ing preview gate', 0, true);
+    }
+
+    // 1. Pagina 001PWA komt altijd vast als eerste (of na de preview gate)
+    appendPage(1, hasAccess ? 0 : 1, true);
 
     // 2. Ontdek dynamisch welke pagina's er vanaf nummer 2 bestaan
     let availablePages = [];
@@ -186,12 +154,29 @@
     }
 
     // 4. Bouw de willekeurige pagina's op
+    const offsetIndex = hasAccess ? 1 : 2;
     availablePages.forEach((pageNumber, index) => {
       const isLast = (index === availablePages.length - 1);
-      appendPage(pageNumber, index + 1, false, isLast);
+      appendPage(pageNumber, index + offsetIndex, false, isLast);
     });
     
     reader.scrollTop = 0;
+  }
+
+  function appendCustomPage(src, altText, index) {
+    const section = document.createElement('section');
+    section.className = 'page';
+    section.id = `page-${index + 1}`;
+    section.setAttribute('aria-label', altText);
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = altText;
+    img.loading = 'eager';
+    img.decoding = 'async';
+    
+    section.appendChild(img);
+    reader.appendChild(section);
   }
 
   function appendPage(pageNumber, index, isFirst = false, isLast = false) {
@@ -238,7 +223,6 @@
   }
 
   window.addEventListener('keydown', (e) => {
-    if (!hasAccess) return;
     const pages = document.querySelectorAll('.page');
     if (!pages.length) return;
 
@@ -273,6 +257,8 @@
       }, 1000);
     }
   });
+
+  initReader();
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
