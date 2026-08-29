@@ -91,6 +91,8 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    padding: 24px;
+    text-align: center;
   }
 
   .gate.hidden {
@@ -99,7 +101,9 @@
 
   .gate-text {
     font-size: 14px;
+    line-height: 1.6;
     letter-spacing: 0.05em;
+    max-width: 400px;
   }
 </style>
 </head>
@@ -107,13 +111,13 @@
 <body>
 
 <div id="gate" class="gate">
-  <div class="gate-text">native app</div>
+  <div class="gate-text">native app only available in apple app store and google play store</div>
 </div>
 
 <main class="reader" id="reader"></main>
 
 <script>
-  // Toegangscontrole
+  // Toegangscontrole via URL-parameter of opgeslagen status
   const params = new URLSearchParams(window.location.search);
   if (params.get('key') === 'nil_access_2026') {
     localStorage.setItem('nil_access', 'true');
@@ -128,16 +132,14 @@
     initReader();
   }
 
-  // Pagina's laden en opbouwen
   function initReader() {
-    // Vul hier eventueel het exacte aantal pagina's in als dit afwijkt
+    // Laadt pagina 001 t/m 048 uit de map /pages/
     const totalPages = 48; 
     
     for (let i = 1; i <= totalPages; i++) {
       const num = String(i).padStart(3, '0');
       const section = document.createElement('section');
       section.className = 'page';
-      section.setAttribute('aria-label', `page ${i}`);
       
       const img = document.createElement('img');
       img.src = `/pages/${num}PWA.png`;
@@ -150,7 +152,7 @@
     }
   }
 
-  // Geheime actie: 3x snel tikken op het scherm opent /privacy
+  // Geheime actie: 3x snel tikken opent /privacy
   let tapCount = 0;
   let tapTimer = null;
 
