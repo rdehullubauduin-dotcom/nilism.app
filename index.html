@@ -133,13 +133,13 @@
   }
 
   function initReader() {
-    // Laadt pagina 001 t/m 048 uit de map /pages/
     const totalPages = 48; 
     
     for (let i = 1; i <= totalPages; i++) {
       const num = String(i).padStart(3, '0');
       const section = document.createElement('section');
       section.className = 'page';
+      section.id = `page-${i}`;
       
       const img = document.createElement('img');
       img.src = `/pages/${num}PWA.png`;
@@ -152,7 +152,31 @@
     }
   }
 
-  // Geheime actie: 3x snel tikken opent /privacy
+  // Cursor / Pijltoetsen navigatie voor desktop & 'r' voor willekeurige pagina
+  window.addEventListener('keydown', (e) => {
+    if (!hasAccess) return;
+    
+    const pages = document.querySelectorAll('.page');
+    if (!pages.length) return;
+
+    let currentIndex = Math.round(reader.scrollTop / window.innerHeight);
+
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      currentIndex = Math.min(currentIndex + 1, pages.length - 1);
+      pages[currentIndex].scrollIntoView({ behavior: 'smooth' });
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      currentIndex = Math.max(currentIndex - 1, 0);
+      pages[currentIndex].scrollIntoView({ behavior: 'smooth' });
+    } else if (e.key.toLowerCase() === 'r') {
+      e.preventDefault();
+      const randomPage = Math.floor(Math.random() * pages.length);
+      pages[randomPage].scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Geheime actie: 3x snel tikken op het scherm opent /privacy
   let tapCount = 0;
   let tapTimer = null;
 
