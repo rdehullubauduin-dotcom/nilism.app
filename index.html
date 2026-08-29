@@ -1,30 +1,18 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon-192.png">
-
 <meta name="theme-color" content="#ffffff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="nilism">
+<meta name="apple-mobile-web-app-title" content="Recenter.ing">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<title>nilism</title>
-
 <style>
-  :root {
-    --bg: #ffffff;
-    --fg: #000000;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
+  :root { --bg: #ffffff; --fg: #000000; }
+  * { box-sizing: border-box; }
 
   html, body {
     margin: 0;
@@ -34,32 +22,34 @@
     color: var(--fg);
     overflow: hidden;
     overscroll-behavior: none;
-  }
-
-  body {
-    font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    touch-action: pan-y;
   }
 
   .reader {
     width: 100vw;
     height: 100dvh;
-    overflow-y: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
     scroll-snap-type: y mandatory;
-    background: #ffffff;
+    scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: #fff;
   }
+
+  .reader::-webkit-scrollbar { display: none; }
 
   .page {
     position: relative;
     width: 100%;
-    height: 100dvh;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
     overflow: hidden;
-    background: #ffffff;
+    background: #fff;
   }
 
   .page img {
@@ -73,134 +63,100 @@
     display: block;
   }
 
+  .gift-link {
+    position: absolute;
+    left: 35%;
+    width: 30%;
+    top: 44%;
+    height: 30%;
+    z-index: 999;
+    display: block;
+  }
+
   @supports (height: 100svh) {
-    .reader, .page {
-      height: 100svh;
-    }
+    .reader, .page { height: 100svh; }
+    .page img { height: 100svh; }
+  }
 
+  @media (display-mode: browser) {
     .page img {
-      height: 100svh;
+      height: 110dvh;
+      width: auto;
+      max-width: none;
     }
-  }
-
-  .gate {
-    position: fixed;
-    inset: 0;
-    background: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    padding: 24px;
-    text-align: center;
-  }
-
-  .gate.hidden {
-    display: none;
-  }
-
-  .gate-text {
-    font-size: 14px;
-    line-height: 1.6;
-    letter-spacing: 0.05em;
-    max-width: 400px;
   }
 </style>
 </head>
 
 <body>
-
-<div id="gate" class="gate">
-  <div class="gate-text">native app only available in apple app store and google play store</div>
-</div>
-
-<main class="reader" id="reader"></main>
+<main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
 
 <script>
-  // Toegangscontrole via URL-parameter of opgeslagen status
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('key') === 'nil_access_2026') {
-    localStorage.setItem('nil_access', 'true');
-  }
+  // Pas dit aan naar het werkelijke aantal pagina's (bijv. 48 of 64)
+  const PAGE_COUNT = 48; 
+  const GIFT_PAGE = PAGE_COUNT;
+  const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
-  const hasAccess = localStorage.getItem('nil_access') === 'true';
-  const gate = document.getElementById('gate');
   const reader = document.getElementById('reader');
 
-  if (hasAccess) {
-    gate.classList.add('hidden');
-    initReader();
-  }
+  for (let i = 1; i <= PAGE_COUNT; i++) {
+    const num = String(i).padStart(3, '0');
 
-  function initReader() {
-    const totalPages = 48; 
+    const section = document.createElement('section');
+    section.className = 'page';
+    section.id = `page-${i}`;
+    section.setAttribute('aria-label', `Page ${i}`);
+
+    const img = document.createElement('img');
+    img.src = `/pages/${num}PWA.png`;
+    img.alt = `Recenter.ing page ${i}`;
+    img.loading = i <= 3 ? 'eager' : 'lazy';
+    img.decoding = 'async';
     
-    for (let i = 1; i <= totalPages; i++) {
-      const num = String(i).padStart(3, '0');
-      const section = document.createElement('section');
-      section.className = 'page';
-      section.id = `page-${i}`;
-      
-      const img = document.createElement('img');
-      img.src = `/pages/${num}PWA.png`;
-      img.alt = `nilism ${num}`;
-      img.loading = i <= 2 ? 'eager' : 'lazy';
-      img.decoding = 'async';
-      
-      section.appendChild(img);
-      reader.appendChild(section);
+    section.appendChild(img);
+
+    if (i === GIFT_PAGE) {
+      const link = document.createElement('a');
+      link.href = GIFT_LINK;
+      link.className = 'gift-link';
+      link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
+      section.appendChild(link);
     }
+
+    reader.appendChild(section);
   }
 
-  // Cursor / Pijltoetsen navigatie voor desktop & 'r' voor willekeurige pagina
+  function pageHeight() {
+    return window.innerHeight;
+  }
+
+  function currentPage() {
+    return Math.round(reader.scrollTop / pageHeight());
+  }
+
+  function go(delta) {
+    const pages = document.querySelectorAll('.page');
+    const next = Math.min(pages.length - 1, Math.max(0, currentPage() + delta));
+    reader.scrollTo({ top: next * pageHeight(), behavior: 'smooth' });
+  }
+
+  // Toetsenbordnavigatie inclusief 'r' voor een willekeurige pagina
   window.addEventListener('keydown', (e) => {
-    if (!hasAccess) return;
-    
     const pages = document.querySelectorAll('.page');
     if (!pages.length) return;
 
-    let currentIndex = Math.round(reader.scrollTop / window.innerHeight);
-
-    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowRight') {
       e.preventDefault();
-      currentIndex = Math.min(currentIndex + 1, pages.length - 1);
-      pages[currentIndex].scrollIntoView({ behavior: 'smooth' });
-    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      go(1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
       e.preventDefault();
-      currentIndex = Math.max(currentIndex - 1, 0);
-      pages[currentIndex].scrollIntoView({ behavior: 'smooth' });
+      go(-1);
     } else if (e.key.toLowerCase() === 'r') {
       e.preventDefault();
-      const randomPage = Math.floor(Math.random() * pages.length);
-      pages[randomPage].scrollIntoView({ behavior: 'smooth' });
+      const randomIndex = Math.floor(Math.random() * pages.length);
+      pages[randomIndex].scrollIntoView({ behavior: 'smooth' });
     }
   });
-
-  // Geheime actie: 3x snel tikken op het scherm opent /privacy
-  let tapCount = 0;
-  let tapTimer = null;
-
-  document.addEventListener("pointerdown", function () {
-    tapCount++;
-    clearTimeout(tapTimer);
-
-    if (tapCount >= 3) {
-      tapCount = 0;
-      window.location.href = "/privacy";
-    } else {
-      tapTimer = setTimeout(function () {
-        tapCount = 0;
-      }, 1000);
-    }
-  });
-
-  // Service Worker registratie
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
 </script>
-
 </body>
 </html>
