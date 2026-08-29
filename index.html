@@ -1,19 +1,132 @@
-<script>
-  // Geheime actie: 3 keer snel tikken op het scherm opent /privacy
-  let tapCount = 0;
-  let tapTimer;
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 
-  window.addEventListener("click", () => {
-    tapCount++;
-    clearTimeout(tapTimer);
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icon-192.png">
 
-    if (tapCount >= 3) {
-      tapCount = 0;
-      window.location.href = "/privacy";
-    } else {
-      tapTimer = setTimeout(() => {
-        tapCount = 0;
-      }, 1000); // Reset als er 1 seconde niet getikt wordt
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="nilism">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<title>nilism</title>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #000000;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: pan-y;
+  }
+
+  body {
+    font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .reader {
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .page {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .page img {
+    height: 100dvh;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    display: block;
+  }
+
+  @supports (height: 100svh) {
+    .reader, .page {
+      height: 100svh;
     }
+
+    .page img {
+      height: 100svh;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<main class="reader" id="reader">
+  <section class="page" aria-label="nilism page">
+    <img id="page-img" src="/pages/001PWA.png" alt="nilism" loading="eager" decoding="async">
+  </section>
+</main>
+
+<script>
+  // Access key verificatie & opslag
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('key') === 'nil_access_2026') {
+    localStorage.setItem('nil_access', 'true');
+  }
+
+  // Geheime actie: 3x snel tikken opent /privacy
+  document.addEventListener("DOMContentLoaded", function () {
+    let tapCount = 0;
+    let tapTimer = null;
+
+    document.addEventListener("pointerdown", function () {
+      tapCount++;
+      clearTimeout(tapTimer);
+
+      if (tapCount >= 3) {
+        tapCount = 0;
+        window.location.href = "/privacy";
+      } else {
+        tapTimer = setTimeout(function () {
+          tapCount = 0;
+        }, 1000);
+      }
+    });
   });
+
+  // Service worker registratie
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
 </script>
+
+</body>
+</html>
