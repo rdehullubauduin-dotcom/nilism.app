@@ -3,6 +3,29 @@
 <head>
 <meta charset="utf-8">
 
+<!-- Blokkeer zoekmachines -->
+<meta name="robots" content="noindex, nofollow">
+
+<script>
+  // Toegangscontrole voor nilism.app
+  const SECRET_KEY = "nil_access_2026";
+  const urlParams = new URLSearchParams(window.location.search);
+
+  if (urlParams.get("key") === SECRET_KEY) {
+    localStorage.setItem("app_access", "granted");
+  }
+
+  if (localStorage.getItem("app_access") !== "granted") {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.innerHTML = `
+        <div style="background:#000; color:#fff; height:100vh; width:100vw; display:flex; align-items:center; justify-content:center; font-family:ui-monospace, monospace;">
+          <p style="margin:0; font-size:14px; letter-spacing:0.05em;">nilism — native app only</p>
+        </div>
+      `;
+    });
+  }
+</script>
+
 <meta
   name="viewport"
   content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
@@ -14,7 +37,7 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="The Zero Sutra">
+<meta name="apple-mobile-web-app-title" content="nilism">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <title>nilism</title>
@@ -123,7 +146,7 @@
 <main
   class="reader"
   id="reader"
-  aria-label="The Zero Sutra reader"
+  aria-label="nilism reader"
 ></main>
 
 <script>
@@ -139,7 +162,7 @@
 
     const img = document.createElement("img");
     img.src = `/pages/${num}PWA.png`;
-    img.alt = `The Zero Sutra page ${i}`;
+    img.alt = `nilism page ${i}`;
     img.loading = i <= 3 ? "eager" : "lazy";
     img.decoding = "async";
 
@@ -200,7 +223,6 @@
           }
         );
 
-        // Bij ieder bezoek direct controleren op een nieuwe sw.js.
         await registration.update();
 
         let reloading = false;
@@ -214,7 +236,7 @@
           }
         );
 
-        console.log("The Zero Sutra service worker active");
+        console.log("nilism service worker active");
       } catch (error) {
         console.error(
           "Service worker registration failed:",
@@ -225,6 +247,4 @@
   }
 </script>
 </body>
-  <!-- trigger Vercel deployment -->
 </html>
-<!-- test -->
