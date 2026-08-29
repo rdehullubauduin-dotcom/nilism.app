@@ -17,22 +17,23 @@
 
   html, body {
     margin: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
     background: var(--bg);
     color: var(--fg);
     overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: pan-y;
   }
 
   .reader {
-    width: 100vw;
-    height: 100dvh;
-    overflow-y: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
     overflow-x: hidden;
     scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     background: #fff;
@@ -43,7 +44,7 @@
   .page {
     position: relative;
     width: 100%;
-    min-height: 100dvh;
+    height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -51,6 +52,7 @@
     scroll-snap-stop: always;
     overflow: hidden;
     background: #fff;
+    flex-shrink: 0;
   }
 
   .page img {
@@ -75,15 +77,14 @@
   }
 
   @supports (height: 100svh) {
-    .reader, .page { height: 100svh; }
+    .page { height: 100svh; }
     .page img { height: 100svh; }
   }
 
   @media (display-mode: browser) {
     .page img {
-      height: 110dvh;
+      height: 100dvh;
       width: auto;
-      max-width: none;
     }
   }
 </style>
@@ -105,7 +106,6 @@
 
   const hasAccess = localStorage.getItem('nil_access') === 'true';
   const reader = document.getElementById('reader');
-
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
   async function checkPageExists(pageNumber) {
@@ -121,43 +121,39 @@
   async function initReader() {
     reader.innerHTML = '';
     
+    // Proefversie start met PWA.png als eerste pagina
     if (!hasAccess) {
-      // PROEFVERSIE: Start met PWA.png als eerste pagina, daarna willekeurig vanaf 001PWA
-      appendCustomPage('/pages/PWA.png', 'Recenter.ing preview gate', 0, true);
+      appendCustomPage('/pages/PWA.png', 'Recenter.ing preview gate', 0);
     }
 
-    // 1. Pagina 001PWA komt altijd vast als eerste (of na de preview gate)
-    appendPage(1, hasAccess ? 0 : 1, true);
+    // Pagina 001PWA komt altijd vast als eerste (of direct na de preview gate)
+    const firstPageIndex = hasAccess ? 0 : 1;
+    appendPage(1, firstPageIndex);
 
-    // 2. Ontdek dynamisch welke pagina's er vanaf nummer 2 bestaan
+    // Zoek dynamisch naar volgende pagina's vanaf 2 tot maximaal 150
     let availablePages = [];
-    let i = 2;
-    let consecutiveMissing = 0;
-
-    while (true) {
+    for (let i = 2; i <= 150; i++) {
       const exists = await checkPageExists(i);
       if (exists) {
         availablePages.push(i);
-        consecutiveMissing = 0;
       } else {
-        consecutiveMissing++;
-        if (consecutiveMissing >= 3) break;
+        // Als er 2 pagina's achter elkaar ontbreken, stoppen we met zoeken
+        const nextExists = await checkPageExists(i + 1);
+        if (!nextExists) break;
       }
-      i++;
-      if (i > 200) break;
     }
 
-    // 3. Schud de resterende pagina's willekeurig door elkaar
+    // Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
     for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
     }
 
-    // 4. Bouw de willekeurige pagina's op
+    // Bouw de willekeurige pagina's in de lezer
     const offsetIndex = hasAccess ? 1 : 2;
     availablePages.forEach((pageNumber, index) => {
       const isLast = (index === availablePages.length - 1);
-      appendPage(pageNumber, index + offsetIndex, false, isLast);
+      appendPage(pageNumber, index + offsetIndex, isLast);
     });
     
     reader.scrollTop = 0;
@@ -179,7 +175,7 @@
     reader.appendChild(section);
   }
 
-  function appendPage(pageNumber, index, isFirst = false, isLast = false) {
+  function appendPage(pageNumber, index, isLast = false) {
     const num = String(pageNumber).padStart(3, '0');
     const section = document.createElement('section');
     section.className = 'page';
