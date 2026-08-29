@@ -123,7 +123,6 @@
 <main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
 
 <script>
-  // Voorkom dat de browser automatisch scrolt naar een oud geheugenpunt bij refresh
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
@@ -138,7 +137,6 @@
   const reader = document.getElementById('reader');
 
   const PAGE_COUNT = 48; 
-  const GIFT_PAGE = PAGE_COUNT;
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
   if (hasAccess) {
@@ -148,23 +146,53 @@
 
   function initReader() {
     reader.innerHTML = '';
-    for (let i = 1; i <= PAGE_COUNT; i++) {
-      const num = String(i).padStart(3, '0');
+    
+    // Vaste start: Pagina 001PWA komt altijd als eerste
+    const firstNum = String(1).padStart(3, '0');
+    const firstSection = document.createElement('section');
+    firstSection.className = 'page';
+    firstSection.id = 'page-1';
+    firstSection.setAttribute('aria-label', 'Page 1');
+
+    const firstImg = document.createElement('img');
+    firstImg.src = `/pages/${firstNum}PWA.png`;
+    firstImg.alt = 'Recenter.ing page 1';
+    firstImg.loading = 'eager';
+    firstImg.decoding = 'async';
+    firstSection.appendChild(firstImg);
+    reader.appendChild(firstSection);
+
+    // Maak een array met de overige pagina's van 2 t/m 48 (000PWA wordt overgeslagen)
+    let pagesArray = [];
+    for (let i = 2; i <= PAGE_COUNT; i++) {
+      pagesArray.push(i);
+    }
+
+    // Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
+    for (let i = pagesArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pagesArray[i], pagesArray[j]] = [pagesArray[j], pagesArray[i]];
+    }
+
+    // Bouw de willekeurige pagina's op
+    pagesArray.forEach((pageNumber, index) => {
+      const num = String(pageNumber).padStart(3, '0');
 
       const section = document.createElement('section');
       section.className = 'page';
-      section.id = `page-${i}`;
-      section.setAttribute('aria-label', `Page ${i}`);
+      section.id = `page-${index + 2}`;
+      section.setAttribute('aria-label', `Page ${pageNumber}`);
 
       const img = document.createElement('img');
       img.src = `/pages/${num}PWA.png`;
-      img.alt = `Recenter.ing page ${i}`;
-      img.loading = i <= 3 ? 'eager' : 'lazy';
+      img.alt = `Recenter.ing page ${pageNumber}`;
+      img.loading = index < 2 ? 'eager' : 'lazy';
       img.decoding = 'async';
       
       section.appendChild(img);
 
-      if (i === GIFT_PAGE) {
+      // Gift link op de allerlaatste pagina van de willekeurige reeks
+      if (index === pagesArray.length - 1) {
         const link = document.createElement('a');
         link.href = GIFT_LINK;
         link.className = 'gift-link';
@@ -173,9 +201,8 @@
       }
 
       reader.appendChild(section);
-    }
+    });
     
-    // Altijd starten bij de eerste pagina na laden met sleutel
     reader.scrollTop = 0;
   }
 
@@ -196,7 +223,6 @@
     return closestIndex;
   }
 
-  // Volledige toetsenbordcontrole inclusief feilloze random 'r' toets
   window.addEventListener('keydown', (e) => {
     if (!hasAccess) return;
     const pages = document.querySelectorAll('.page');
@@ -217,7 +243,6 @@
     }
   });
 
-  // Geheime actie: 3x snel tikken op het scherm opent /privacy
   let tapCount = 0;
   let tapTimer = null;
 
