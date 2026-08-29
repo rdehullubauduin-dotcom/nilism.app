@@ -123,7 +123,6 @@
 <main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
 
 <script>
-  // Toegangscontrole via URL-parameter of opgeslagen status
   const params = new URLSearchParams(window.location.search);
   if (params.get('key') === 'nil_access_2026') {
     localStorage.setItem('nil_access', 'true');
@@ -133,14 +132,14 @@
   const gate = document.getElementById('gate');
   const reader = document.getElementById('reader');
 
+  const PAGE_COUNT = 48; 
+  const GIFT_PAGE = PAGE_COUNT;
+  const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
+
   if (hasAccess) {
     gate.classList.add('hidden');
     initReader();
   }
-
-  const PAGE_COUNT = 48; 
-  const GIFT_PAGE = PAGE_COUNT;
-  const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
   function initReader() {
     for (let i = 1; i <= PAGE_COUNT; i++) {
@@ -171,12 +170,8 @@
     }
   }
 
-  function getPages() {
-    return document.querySelectorAll('.page');
-  }
-
   function getCurrentIndex() {
-    const pages = getPages();
+    const pages = document.querySelectorAll('.page');
     if (!pages.length) return 0;
     const scrollTop = reader.scrollTop;
     let closestIndex = 0;
@@ -192,25 +187,20 @@
     return closestIndex;
   }
 
-  function go(delta) {
-    const pages = getPages();
-    if (!pages.length) return;
-    const nextIndex = Math.min(pages.length - 1, Math.max(0, getCurrentIndex() + delta));
-    pages[nextIndex].scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // Toetsenbordnavigatie inclusief 'r' voor een willekeurige pagina en 3x tikken naar /privacy
+  // Toetsenbordnavigatie en directe random-selectie
   window.addEventListener('keydown', (e) => {
     if (!hasAccess) return;
-    const pages = getPages();
+    const pages = document.querySelectorAll('.page');
     if (!pages.length) return;
 
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowRight') {
       e.preventDefault();
-      go(1);
+      const nextIndex = Math.min(pages.length - 1, getCurrentIndex() + 1);
+      pages[nextIndex].scrollIntoView({ behavior: 'smooth' });
     } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
       e.preventDefault();
-      go(-1);
+      const prevIndex = Math.max(0, getCurrentIndex() - 1);
+      pages[prevIndex].scrollIntoView({ behavior: 'smooth' });
     } else if (e.key.toLowerCase() === 'r') {
       e.preventDefault();
       const randomIndex = Math.floor(Math.random() * pages.length);
@@ -236,7 +226,6 @@
     }
   });
 
-  // Service Worker registratie
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
