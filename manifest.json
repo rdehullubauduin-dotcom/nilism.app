@@ -1,6 +1,6 @@
 {
-  "name": "The Zero Sutra",
-  "short_name": "Zero Sutra",
+  "name": "nilism.app",
+  "short_name": "nilism.app",
   "display": "standalone",
   "orientation": "portrait",
   "start_url": "/",
