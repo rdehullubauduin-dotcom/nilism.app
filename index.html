@@ -136,7 +136,6 @@
   const gate = document.getElementById('gate');
   const reader = document.getElementById('reader');
 
-  const PAGE_COUNT = 48; 
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
   if (hasAccess) {
@@ -144,66 +143,83 @@
     initReader();
   }
 
-  function initReader() {
+  // Functie om te controleren of een paginabestand daadwerkelijk bestaat
+  async function checkPageExists(pageNumber) {
+    const num = String(pageNumber).padStart(3, '0');
+    try {
+      const response = await fetch(`/pages/${num}PWA.png`, { method: 'HEAD' });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function initReader() {
     reader.innerHTML = '';
     
-    // Vaste start: Pagina 001PWA komt altijd als eerste
-    const firstNum = String(1).padStart(3, '0');
-    const firstSection = document.createElement('section');
-    firstSection.className = 'page';
-    firstSection.id = 'page-1';
-    firstSection.setAttribute('aria-label', 'Page 1');
+    // 1. Pagina 001PWA komt altijd vast als eerste
+    appendPage(1, 0, true);
 
-    const firstImg = document.createElement('img');
-    firstImg.src = `/pages/${firstNum}PWA.png`;
-    firstImg.alt = 'Recenter.ing page 1';
-    firstImg.loading = 'eager';
-    firstImg.decoding = 'async';
-    firstSection.appendChild(firstImg);
-    reader.appendChild(firstSection);
+    // 2. Ontdek dynamisch welke pagina's er vanaf nummer 2 bestaan
+    let availablePages = [];
+    let i = 2;
+    let consecutiveMissing = 0;
 
-    // Maak een array met de overige pagina's van 2 t/m 48 (000PWA wordt overgeslagen)
-    let pagesArray = [];
-    for (let i = 2; i <= PAGE_COUNT; i++) {
-      pagesArray.push(i);
-    }
-
-    // Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
-    for (let i = pagesArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pagesArray[i], pagesArray[j]] = [pagesArray[j], pagesArray[i]];
-    }
-
-    // Bouw de willekeurige pagina's op
-    pagesArray.forEach((pageNumber, index) => {
-      const num = String(pageNumber).padStart(3, '0');
-
-      const section = document.createElement('section');
-      section.className = 'page';
-      section.id = `page-${index + 2}`;
-      section.setAttribute('aria-label', `Page ${pageNumber}`);
-
-      const img = document.createElement('img');
-      img.src = `/pages/${num}PWA.png`;
-      img.alt = `Recenter.ing page ${pageNumber}`;
-      img.loading = index < 2 ? 'eager' : 'lazy';
-      img.decoding = 'async';
-      
-      section.appendChild(img);
-
-      // Gift link op de allerlaatste pagina van de willekeurige reeks
-      if (index === pagesArray.length - 1) {
-        const link = document.createElement('a');
-        link.href = GIFT_LINK;
-        link.className = 'gift-link';
-        link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
-        section.appendChild(link);
+    while (true) {
+      const exists = await checkPageExists(i);
+      if (exists) {
+        availablePages.push(i);
+        consecutiveMissing = 0; // Reset als we een pagina vinden
+      } else {
+        consecutiveMissing++;
+        // Als er 3 nummers achter elkaar niet bestaan, stoppen we met zoeken
+        if (consecutiveMissing >= 3) break;
       }
+      i++;
+      // Veiligheidslimiet zodat de lus nooit oneindig blijft draaien (maximaal 200 pagina's)
+      if (i > 200) break;
+    }
 
-      reader.appendChild(section);
+    // 3. Schud de ontdekte resterende pagina's willekeurig door elkaar
+    for (j = availablePages.length - 1; j > 0; j--) {
+      const rand = Math.floor(Math.random() * (j + 1));
+      [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
+    }
+
+    // 4. Bouw de willekeurige pagina's op in de lezer
+    availablePages.forEach((pageNumber, index) => {
+      const isLast = (index === availablePages.length - 1);
+      appendPage(pageNumber, index + 1, false, isLast);
     });
     
     reader.scrollTop = 0;
+  }
+
+  function appendPage(pageNumber, index, isFirst = false, isLast = false) {
+    const num = String(pageNumber).padStart(3, '0');
+    const section = document.createElement('section');
+    section.className = 'page';
+    section.id = `page-${index + 1}`;
+    section.setAttribute('aria-label', `Page ${pageNumber}`);
+
+    const img = document.createElement('img');
+    img.src = `/pages/${num}PWA.png`;
+    img.alt = `Recenter.ing page ${pageNumber}`;
+    img.loading = index < 3 ? 'eager' : 'lazy';
+    img.decoding = 'async';
+    
+    section.appendChild(img);
+
+    // Zet de Stripe gift-link alleen op de allerlaatste pagina van de willekeurige reeks
+    if (isLast) {
+      const link = document.createElement('a');
+      link.href = GIFT_LINK;
+      link.className = 'gift-link';
+      link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
+      section.appendChild(link);
+    }
+
+    reader.appendChild(section);
   }
 
   function getCurrentIndex() {
