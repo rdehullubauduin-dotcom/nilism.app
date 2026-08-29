@@ -150,25 +150,36 @@
 ></main>
 
 <script>
-  const PAGE_COUNT = 51;
+  const TOTAL_PAGES = 51;
   const reader = document.getElementById("reader");
 
-  for (let i = 1; i <= PAGE_COUNT; i++) {
-    const num = String(i).padStart(3, "0");
+  // 1. Maak een lijst van pagina 2 t/m 51 en hussel deze willekeurig
+  const remainingPages = Array.from({ length: TOTAL_PAGES - 1 }, (_, i) => i + 2);
+  for (let i = remainingPages.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [remainingPages[i], remainingPages[j]] = [remainingPages[j], remainingPages[i]];
+  }
+
+  // 2. Pagina 1 staat altijd vast voorop
+  const pageOrder = [1, ...remainingPages];
+
+  // 3. Bouw de pagina's op in het DOM
+  pageOrder.forEach((pageNum, index) => {
+    const num = String(pageNum).padStart(3, "0");
 
     const section = document.createElement("section");
     section.className = "page";
-    section.setAttribute("aria-label", `Page ${i}`);
+    section.setAttribute("aria-label", `Page ${pageNum}`);
 
     const img = document.createElement("img");
     img.src = `/pages/${num}PWA.png`;
-    img.alt = `nilism page ${i}`;
-    img.loading = i <= 3 ? "eager" : "lazy";
+    img.alt = `nilism page ${pageNum}`;
+    img.loading = index === 0 ? "eager" : "lazy";
     img.decoding = "async";
 
     section.appendChild(img);
     reader.appendChild(section);
-  }
+  });
 
   function pageHeight() {
     return reader.clientHeight;
@@ -180,7 +191,7 @@
 
   function go(delta) {
     const nextPage = Math.min(
-      PAGE_COUNT - 1,
+      TOTAL_PAGES - 1,
       Math.max(0, currentPage() + delta)
     );
 
@@ -211,6 +222,7 @@
     }
   });
 </script>
+
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
