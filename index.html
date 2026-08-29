@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -73,6 +74,31 @@
     display: block;
   }
 
+  .gate {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .gate.hidden {
+    display: none;
+  }
+
+  .gate-text {
+    font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+    max-width: 400px;
+    color: #000000;
+  }
+
   @supports (height: 100svh) {
     .reader, .page { height: 100svh; }
     .page img { height: 100svh; }
@@ -89,60 +115,94 @@
 </head>
 
 <body>
+
+<div id="gate" class="gate">
+  <div class="gate-text">native app only available in apple app store and google play store</div>
+</div>
+
 <main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
 
 <script>
-  // Pas dit aan naar het werkelijke aantal pagina's (bijv. 48 of 64)
+  // Toegangscontrole via URL-parameter of opgeslagen status
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('key') === 'nil_access_2026') {
+    localStorage.setItem('nil_access', 'true');
+  }
+
+  const hasAccess = localStorage.getItem('nil_access') === 'true';
+  const gate = document.getElementById('gate');
+  const reader = document.getElementById('reader');
+
+  if (hasAccess) {
+    gate.classList.add('hidden');
+    initReader();
+  }
+
   const PAGE_COUNT = 48; 
   const GIFT_PAGE = PAGE_COUNT;
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
 
-  const reader = document.getElementById('reader');
+  function initReader() {
+    for (let i = 1; i <= PAGE_COUNT; i++) {
+      const num = String(i).padStart(3, '0');
 
-  for (let i = 1; i <= PAGE_COUNT; i++) {
-    const num = String(i).padStart(3, '0');
+      const section = document.createElement('section');
+      section.className = 'page';
+      section.id = `page-${i}`;
+      section.setAttribute('aria-label', `Page ${i}`);
 
-    const section = document.createElement('section');
-    section.className = 'page';
-    section.id = `page-${i}`;
-    section.setAttribute('aria-label', `Page ${i}`);
+      const img = document.createElement('img');
+      img.src = `/pages/${num}PWA.png`;
+      img.alt = `Recenter.ing page ${i}`;
+      img.loading = i <= 3 ? 'eager' : 'lazy';
+      img.decoding = 'async';
+      
+      section.appendChild(img);
 
-    const img = document.createElement('img');
-    img.src = `/pages/${num}PWA.png`;
-    img.alt = `Recenter.ing page ${i}`;
-    img.loading = i <= 3 ? 'eager' : 'lazy';
-    img.decoding = 'async';
-    
-    section.appendChild(img);
+      if (i === GIFT_PAGE) {
+        const link = document.createElement('a');
+        link.href = GIFT_LINK;
+        link.className = 'gift-link';
+        link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
+        section.appendChild(link);
+      }
 
-    if (i === GIFT_PAGE) {
-      const link = document.createElement('a');
-      link.href = GIFT_LINK;
-      link.className = 'gift-link';
-      link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
-      section.appendChild(link);
+      reader.appendChild(section);
     }
-
-    reader.appendChild(section);
   }
 
-  function pageHeight() {
-    return window.innerHeight;
+  function getPages() {
+    return document.querySelectorAll('.page');
   }
 
-  function currentPage() {
-    return Math.round(reader.scrollTop / pageHeight());
+  function getCurrentIndex() {
+    const pages = getPages();
+    if (!pages.length) return 0;
+    const scrollTop = reader.scrollTop;
+    let closestIndex = 0;
+    let minDistance = Infinity;
+
+    pages.forEach((page, index) => {
+      const distance = Math.abs(page.offsetTop - scrollTop);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+    return closestIndex;
   }
 
   function go(delta) {
-    const pages = document.querySelectorAll('.page');
-    const next = Math.min(pages.length - 1, Math.max(0, currentPage() + delta));
-    reader.scrollTo({ top: next * pageHeight(), behavior: 'smooth' });
+    const pages = getPages();
+    if (!pages.length) return;
+    const nextIndex = Math.min(pages.length - 1, Math.max(0, getCurrentIndex() + delta));
+    pages[nextIndex].scrollIntoView({ behavior: 'smooth' });
   }
 
-  // Toetsenbordnavigatie inclusief 'r' voor een willekeurige pagina
+  // Toetsenbordnavigatie inclusief 'r' voor een willekeurige pagina en 3x tikken naar /privacy
   window.addEventListener('keydown', (e) => {
-    const pages = document.querySelectorAll('.page');
+    if (!hasAccess) return;
+    const pages = getPages();
     if (!pages.length) return;
 
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowRight') {
@@ -157,6 +217,31 @@
       pages[randomIndex].scrollIntoView({ behavior: 'smooth' });
     }
   });
+
+  // Geheime actie: 3x snel tikken op het scherm opent /privacy
+  let tapCount = 0;
+  let tapTimer = null;
+
+  document.addEventListener("pointerdown", function () {
+    tapCount++;
+    clearTimeout(tapTimer);
+
+    if (tapCount >= 3) {
+      tapCount = 0;
+      window.location.href = "/privacy";
+    } else {
+      tapTimer = setTimeout(function () {
+        tapCount = 0;
+      }, 1000);
+    }
+  });
+
+  // Service Worker registratie
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
