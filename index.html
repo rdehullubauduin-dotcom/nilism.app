@@ -121,35 +121,31 @@
   async function initReader() {
     reader.innerHTML = '';
     
-    // Proefversie start met PWA.png als eerste pagina
+    // 1. Bouw direct de startpagina's op zodat de gebruiker niet hoeft te wachten
     if (!hasAccess) {
       appendCustomPage('/pages/PWA.png', 'Recenter.ing preview gate', 0);
     }
+    appendPage(1, hasAccess ? 0 : 1);
 
-    // Pagina 001PWA komt altijd vast als eerste (of direct na de preview gate)
-    const firstPageIndex = hasAccess ? 0 : 1;
-    appendPage(1, firstPageIndex);
-
-    // Zoek dynamisch naar volgende pagina's vanaf 2 tot maximaal 150
-    let availablePages = [];
-    for (let i = 2; i <= 150; i++) {
-      const exists = await checkPageExists(i);
-      if (exists) {
-        availablePages.push(i);
-      } else {
-        // Als er 2 pagina's achter elkaar ontbreken, stoppen we met zoeken
-        const nextExists = await checkPageExists(i + 1);
-        if (!nextExists) break;
-      }
+    // 2. Controleer pagina's 2 tot 150 gelijktijdig (bliksemsnel in parallel)
+    const maxCheck = 150;
+    const promises = [];
+    for (let i = 2; i <= maxCheck; i++) {
+      promises.push(
+        checkPageExists(i).then(exists => exists ? i : null)
+      );
     }
 
-    // Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
+    const results = await Promise.all(promises);
+    let availablePages = results.filter(num => num !== null);
+
+    // 3. Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
     for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
     }
 
-    // Bouw de willekeurige pagina's in de lezer
+    // 4. Voeg de willekeurige pagina's toe aan de lezer
     const offsetIndex = hasAccess ? 1 : 2;
     availablePages.forEach((pageNumber, index) => {
       const isLast = (index === availablePages.length - 1);
