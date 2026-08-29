@@ -82,30 +82,31 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    padding: 24px;
-    text-align: center;
+    overflow: hidden;
   }
 
   .gate.hidden {
     display: none;
   }
 
-  .gate-text {
-    font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.6;
-    letter-spacing: 0.05em;
-    max-width: 400px;
-    color: #000000;
+  .gate img {
+    height: 100dvh;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    display: block;
   }
 
   @supports (height: 100svh) {
-    .reader, .page { height: 100svh; }
-    .page img { height: 100svh; }
+    .reader, .page, .gate { height: 100svh; }
+    .page img, .gate img { height: 100svh; }
   }
 
   @media (display-mode: browser) {
-    .page img {
+    .page img, .gate img {
       height: 110dvh;
       width: auto;
       max-width: none;
@@ -116,8 +117,9 @@
 
 <body>
 
+<!-- Toon de afbeelding als poortscherm als er geen toegang is -->
 <div id="gate" class="gate">
-  <div class="gate-text">native app only available in apple app store and google play store</div>
+  <img src="/pages/PWA.png" alt="native app only available in apple app store and google play store" loading="eager" decoding="async">
 </div>
 
 <main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
@@ -143,7 +145,6 @@
     initReader();
   }
 
-  // Functie om te controleren of een paginabestand daadwerkelijk bestaat
   async function checkPageExists(pageNumber) {
     const num = String(pageNumber).padStart(3, '0');
     try {
@@ -169,24 +170,22 @@
       const exists = await checkPageExists(i);
       if (exists) {
         availablePages.push(i);
-        consecutiveMissing = 0; // Reset als we een pagina vinden
+        consecutiveMissing = 0;
       } else {
         consecutiveMissing++;
-        // Als er 3 nummers achter elkaar niet bestaan, stoppen we met zoeken
         if (consecutiveMissing >= 3) break;
       }
       i++;
-      // Veiligheidslimiet zodat de lus nooit oneindig blijft draaien (maximaal 200 pagina's)
       if (i > 200) break;
     }
 
-    // 3. Schud de ontdekte resterende pagina's willekeurig door elkaar
-    for (j = availablePages.length - 1; j > 0; j--) {
+    // 3. Schud de resterende pagina's willekeurig door elkaar
+    for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
     }
 
-    // 4. Bouw de willekeurige pagina's op in de lezer
+    // 4. Bouw de willekeurige pagina's op
     availablePages.forEach((pageNumber, index) => {
       const isLast = (index === availablePages.length - 1);
       appendPage(pageNumber, index + 1, false, isLast);
@@ -210,7 +209,6 @@
     
     section.appendChild(img);
 
-    // Zet de Stripe gift-link alleen op de allerlaatste pagina van de willekeurige reeks
     if (isLast) {
       const link = document.createElement('a');
       link.href = GIFT_LINK;
