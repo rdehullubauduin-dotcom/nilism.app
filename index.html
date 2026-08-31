@@ -100,36 +100,25 @@
     return `/pages/${padded}.png`;
   }
 
-  async function checkPageExists(num) {
-    try {
-      const res = await fetch(getPageSrc(num), { method: 'HEAD' });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
   async function initReader() {
     reader.innerHTML = '';
     let tempPages = [];
 
-    // 1. Als er GEEN access is, tonen we de PWA-previewgate als startscherm
+    // 1. Preview gate als er geen access is
     if (!hasAccess) {
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate', isGift: false });
     }
 
-    // 2. Altijd pagina 1 en de geschudde boekpagina's inladen
+    // 2. Pagina 1
     tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
 
-    const maxCheck = 150;
-    const promises = [];
-    for (let i = 2; i <= maxCheck; i++) {
-      promises.push(checkPageExists(i).then(exists => exists ? i : null));
+    // 3. Forceer direct alle pagina's van 2 t/m 54 (of tot waar je manuscript loopt)
+    let availablePages = [];
+    for (let i = 2; i <= 54; i++) {
+      availablePages.push(i);
     }
 
-    const results = await Promise.all(promises);
-    let availablePages = results.filter(num => num !== null);
-
+    // Schud de pagina's willekeurig
     for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
@@ -143,14 +132,14 @@
       });
     });
 
-    // 3. 000PWA.png komt altijd als de absolute laatste pagina (bereikbaar via de lange druk)
+    // 4. 000PWA.png als absolute laatste pagina voor de lange druk
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page',
       isGift: false
     });
 
-    // Render alle pagina's naar de DOM
+    // Render alles naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -171,7 +160,7 @@
     currentIndex = 0;
   }
 
-  // Normale bladerlogica via klikken / tikken
+  // Klik om te bladeren
   document.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
@@ -181,7 +170,7 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
+  // 2 seconden ingedrukt houden om naar 000PWA.png te springen
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
@@ -191,15 +180,15 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
+      currentIndex = pages.length - 1; // Spring naar 000PWA.png
       pages[currentIndex].classList.add('active');
-    }, 2000); // 2000 milliseconden = 2 seconden
+    }, 2000);
   });
 
   document.addEventListener("pointermove", () => clearTimeout(pressTimer));
   document.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
-  // Toetsenbordondersteuning
+  // Toetsenbord
   window.addEventListener('keydown', (e) => {
     if (!pages.length) return;
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
