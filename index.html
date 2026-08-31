@@ -81,110 +81,189 @@
 
 <script>
   const reader = document.getElementById('reader');
-  let pages = [];
+  let bookPagesList = []; // Bevat de oneindige/willekeurige stroom
+  let privacyPageElement = null; // De vaste 000PWA.png pagina
   let currentIndex = 0;
+  let previousIndex = 0;
+  let isViewingPrivacy = false;
+
+  function getRandomPageFileName() {
+    // Genereer willekeurig een getal van 2 t/m 51
+    const randNum = Math.floor(Math.random() * 50) + 2;
+    const padded = String(randNum).padStart(3, '0');
+    return `${padded}PWA.png`;
+  }
 
   function initReader() {
     reader.innerHTML = '';
-    let tempPages = [];
-
+    
     const hostname = window.location.hostname;
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
-    } else {
-      tempPages.push({ src: '/pages/001PWA.png', alt: 'Page 001PWA' });
-
-      let bookPages = [];
-      for (let i = 2; i <= 51; i++) {
-        const padded = String(i).padStart(3, '0');
-        bookPages.push(`${padded}PWA.png`);
-      }
-
-      for (let j = bookPages.length - 1; j > 0; j--) {
-        const rand = Math.floor(Math.random() * (j + 1));
-        [bookPages[j], bookPages[rand]] = [bookPages[rand], bookPages[j]];
-      }
-
-      bookPages.forEach((fileName) => {
-        tempPages.push({
-          src: `/pages/${fileName}`,
-          alt: `Page ${fileName}`
-        });
-      });
-    }
-
-    // Exact 000PWA.png als uitsmijter achteraan in de array
-    tempPages.push({
-      src: '/pages/000PWA.png',
-      alt: 'Privacy Page 000PWA'
-    });
-
-    tempPages.forEach((pData, idx) => {
+      // Op de live domein tonen we alleen de PWA preview gate
       const section = document.createElement('section');
-      section.className = 'page' + (idx === 0 ? ' active' : '');
-      section.setAttribute('aria-label', pData.alt);
+      section.className = 'page active';
+      section.setAttribute('aria-label', 'Preview gate');
 
       const img = document.createElement('img');
-      img.src = pData.src;
-      img.alt = pData.alt;
-      img.loading = idx < 3 ? 'eager' : 'lazy';
+      img.src = '/pages/PWA.png';
+      img.alt = 'Preview gate';
+      img.loading = 'eager';
       img.decoding = 'async';
       
       section.appendChild(img);
       reader.appendChild(section);
-    });
+      bookPagesList = [section];
+      currentIndex = 0;
+      return;
+    }
 
-    pages = document.querySelectorAll('.page');
+    // 1. Maak de vaste startpagina: 001PWA.png
+    const startSection = document.createElement('section');
+    startSection.className = 'page active';
+    startSection.setAttribute('aria-label', 'Page 001PWA');
+
+    const startImg = document.createElement('img');
+    startImg.src = '/pages/001PWA.png';
+    startImg.alt = 'Page 001PWA';
+    startImg.loading = 'eager';
+    startImg.decoding = 'async';
+    
+    startSection.appendChild(startImg);
+    reader.appendChild(startSection);
+    bookPagesList = [startSection];
+
+    // 2. Maak de privacy-pagina: 000PWA.png (zit los van de normale stroom)
+    const privacySection = document.createElement('section');
+    privacySection.className = 'page';
+    privacySection.setAttribute('aria-label', 'Privacy Page 000PWA');
+
+    const privacyImg = document.createElement('img');
+    privacyImg.src = '/pages/000PWA.png';
+    privacyImg.alt = 'Privacy Page 000PWA';
+    privacyImg.loading = 'lazy';
+    privacyImg.decoding = 'async';
+
+    privacySection.appendChild(privacyImg);
+    reader.appendChild(privacySection);
+    privacyPageElement = privacySection;
+
     currentIndex = 0;
   }
 
-  // Kliklogica met dubbele tik voor 000PWA.png
+  // Functie om dynamisch een nieuwe willekeurige pagina toe te voegen aan de lijst als je naar rechts klikt
+  function addNextRandomPage() {
+    const fileName = getRandomPageFileName();
+    const section = document.createElement('section');
+    section.className = 'page';
+    section.setAttribute('aria-label', `Page ${fileName}`);
+
+    const img = document.createElement('img');
+    img.src = `/pages/${fileName}`;
+    img.alt = `Page ${fileName}`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+
+    section.appendChild(img);
+    reader.appendChild(section);
+    bookPagesList.push(section);
+  }
+
+  // Kliklogica: dubbele tik voor privacy, anders links/rechts bladeren
   let lastClickTime = 0;
 
   window.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
-    if (!pages.length) return;
+    if (!bookPagesList.length) return;
+
+    const hostname = window.location.hostname;
+    if (hostname === 'nilism.app' || hostname === 'www.nilism.app') return;
 
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
+    // Dubbele tik activeert/deactiveert de privacy-pagina (000PWA.png)
     if (timeDiff < 300 && timeDiff > 0) {
-      pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Springt direct naar 000PWA.png
-      pages[currentIndex].classList.add('active');
+      if (isViewingPrivacy) {
+        // Terug naar waar je gebleven was
+        privacyPageElement.classList.remove('active');
+        currentIndex = previousIndex;
+        bookPagesList[currentIndex].classList.add('active');
+        isViewingPrivacy = false;
+      } else {
+        // Sla huidige index op en spring naar privacy
+        previousIndex = currentIndex;
+        if (!isViewingPrivacy) {
+          bookPagesList[currentIndex].classList.remove('active');
+        }
+        privacyPageElement.classList.add('active');
+        isViewingPrivacy = true;
+      }
       lastClickTime = 0;
       return;
     }
 
     lastClickTime = currentTime;
 
-    // Normaal bladeren (links = achteruit, rechts = vooruit)
-    pages[currentIndex].classList.remove('active');
-
-    if (e.clientX < window.innerWidth / 2) {
-      currentIndex = (currentIndex - 1 + pages.length) % pages.length;
-    } else {
-      currentIndex = (currentIndex + 1) % pages.length;
+    // Als we naar privacy kijken, sluit privacy dan bij een normale klik
+    if (isViewingPrivacy) {
+      privacyPageElement.classList.remove('active');
+      currentIndex = previousIndex;
+      bookPagesList[currentIndex].classList.add('active');
+      isViewingPrivacy = false;
+      return;
     }
 
-    pages[currentIndex].classList.add('active');
+    // Normaal bladeren
+    bookPagesList[currentIndex].classList.remove('active');
+
+    if (e.clientX < window.innerWidth / 2) {
+      // Linkerkant geklikt -> ga naar vorig (minimum is index 0, je kunt niet voorbij 001PWA.png terug)
+      if (currentIndex > 0) {
+        currentIndex--;
+      }
+    } else {
+      // Rechterkant geklikt -> ga naar volgende
+      currentIndex++;
+      // Als we op het punt komen dat nog niet bestaat in de willekeurige stroom, genereer een nieuwe willekeurige pagina
+      if (currentIndex >= bookPagesList.length) {
+        addNextRandomPage();
+      }
+    }
+
+    bookPagesList[currentIndex].classList.add('active');
   });
 
   // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
-    if (!pages.length) return;
+    if (!bookPagesList.length) return;
+    const hostname = window.location.hostname;
+    if (hostname === 'nilism.app' || hostname === 'www.nilism.app') return;
+
+    if (isViewingPrivacy) {
+      privacyPageElement.classList.remove('active');
+      currentIndex = previousIndex;
+      bookPagesList[currentIndex].classList.add('active');
+      isViewingPrivacy = false;
+      return;
+    }
+
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
       e.preventDefault();
-      pages[currentIndex].classList.remove('active');
-      currentIndex = (currentIndex + 1) % pages.length;
-      pages[currentIndex].classList.add('active');
+      bookPagesList[currentIndex].classList.remove('active');
+      currentIndex++;
+      if (currentIndex >= bookPagesList.length) {
+        addNextRandomPage();
+      }
+      bookPagesList[currentIndex].classList.add('active');
     } else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) {
       e.preventDefault();
-      pages[currentIndex].classList.remove('active');
-      currentIndex = (currentIndex - 1 + pages.length) % pages.length;
-      pages[currentIndex].classList.add('active');
+      if (currentIndex > 0) {
+        bookPagesList[currentIndex].classList.remove('active');
+        currentIndex--;
+        bookPagesList[currentIndex].classList.add('active');
+      }
     }
   });
 
