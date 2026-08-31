@@ -59,8 +59,9 @@
   }
 
   .page img {
-    max-width: 110vw;
-    max-height: 110dvh;
+    /* Forse vergroting zodat het daadwerkelijk meer inzoomt */
+    max-width: 140vw;
+    max-height: 140dvh;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -69,18 +70,6 @@
     pointer-events: none;
     display: block;
     margin: auto;
-    margin-top: -4vh;
-  }
-
-  @supports (height: 100svh) {
-    .page { height: 100svh; }
-    .page img { max-height: 100svh; }
-  }
-
-  @media (display-mode: browser) {
-    .page img {
-      max-height: 100dvh;
-    }
   }
 </style>
 </head>
@@ -102,20 +91,16 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      // Op nilism.app tonen we enkel PWA.png als preview gate
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      // 1. Altijd beginnen bij 001PWA.png
       tempPages.push({ src: '/pages/001PWA.png', alt: 'Page 001PWA' });
 
-      // 2. Genereer array van 002 t/m 051
       let bookPages = [];
       for (let i = 2; i <= 51; i++) {
         const padded = String(i).padStart(3, '0');
         bookPages.push(`${padded}PWA.png`);
       }
 
-      // Schud de pagina's van 002PWA t/m 051PWA willekeurig door elkaar
       for (let j = bookPages.length - 1; j > 0; j--) {
         const rand = Math.floor(Math.random() * (j + 1));
         [bookPages[j], bookPages[rand]] = [bookPages[rand], bookPages[j]];
@@ -129,13 +114,11 @@
       });
     }
 
-    // 3. 000PWA.png komt altijd als absolute uitsmijter voor de lange druk van 2 seconden
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
     });
 
-    // Render alles direct naar de DOM met exact dezelfde zoom en centrering
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -155,33 +138,39 @@
     currentIndex = 0;
   }
 
-  // Normaal bladeren via klikken
-  document.addEventListener("click", (e) => {
+  // Kliklogica: links = achteruit, rechts = vooruit (directe afhandeling op window)
+  window.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
 
     pages[currentIndex].classList.remove('active');
-    currentIndex = (currentIndex + 1) % pages.length;
+
+    if (e.clientX < window.innerWidth / 2) {
+      currentIndex = (currentIndex - 1 + pages.length) % pages.length;
+    } else {
+      currentIndex = (currentIndex + 1) % pages.length;
+    }
+
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
+  // 2 seconden ingedrukt houden voor privacy (000PWA.png)
   let pressTimer = null;
 
-  document.addEventListener("pointerdown", function (e) {
+  window.addEventListener("pointerdown", (e) => {
     if (e.target.closest('.gift-link')) return;
     clearTimeout(pressTimer);
 
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring direct naar 000PWA.png
+      currentIndex = pages.length - 1;
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
 
-  document.addEventListener("pointermove", () => clearTimeout(pressTimer));
-  document.addEventListener("pointerup", () => clearTimeout(pressTimer));
+  window.addEventListener("pointermove", () => clearTimeout(pressTimer));
+  window.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
   // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
