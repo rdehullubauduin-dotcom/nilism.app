@@ -115,7 +115,7 @@
       });
     }
 
-    // 00PWA.png toevoegen als uitsmijter achteraan
+    // 00PWA.png als uitsmijter achteraan
     tempPages.push({
       src: '/pages/00PWA.png',
       alt: 'Privacy Page'
@@ -140,11 +140,28 @@
     currentIndex = 0;
   }
 
-  // Kliklogica: links = achteruit, rechts = vooruit
+  // Normale bladerlogica + ingebouwde dubbele tik detector voor 00PWA.png
+  let lastClickTime = 0;
+
   window.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
 
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+
+    // Als er binnen 300 milliseconden twee keer wordt geklikt, spring direct naar 00PWA.png
+    if (timeDiff < 300 && timeDiff > 0) {
+      pages[currentIndex].classList.remove('active');
+      currentIndex = pages.length - 1; // Direct naar 00PWA.png
+      pages[currentIndex].classList.add('active');
+      lastClickTime = 0;
+      return;
+    }
+
+    lastClickTime = currentTime;
+
+    // Normaal bladeren (links = achteruit, rechts = vooruit)
     pages[currentIndex].classList.remove('active');
 
     if (e.clientX < window.innerWidth / 2) {
@@ -155,35 +172,6 @@
 
     pages[currentIndex].classList.add('active');
   });
-
-  // Directe en betrouwbare 2-seconden timer met touch/pointer events
-  let pressTimer = null;
-  let isLongPress = false;
-
-  window.addEventListener("pointerdown", (e) => {
-    if (e.target.closest('.gift-link')) return;
-    isLongPress = false;
-    clearTimeout(pressTimer);
-
-    pressTimer = setTimeout(() => {
-      if (!pages.length) return;
-      isLongPress = true;
-      pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Direct naar 00PWA.png
-      pages[currentIndex].classList.add('active');
-    }, 2000);
-  });
-
-  window.addEventListener("pointermove", () => clearTimeout(pressTimer));
-  window.addEventListener("pointerup", () => clearTimeout(pressTimer));
-  window.addEventListener("pointercancel", () => clearTimeout(pressTimer));
-
-  window.addEventListener("click", (e) => {
-    if (isLongPress) {
-      e.stopImmediatePropagation();
-      isLongPress = false;
-    }
-  }, true);
 
   // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
