@@ -115,10 +115,10 @@
       });
     }
 
-    // 00PWA.png als uitsmijter achteraan
+    // Exact 000PWA.png als uitsmijter achteraan in de array
     tempPages.push({
-      src: '/pages/00PWA.png',
-      alt: 'Privacy Page'
+      src: '/pages/000PWA.png',
+      alt: 'Privacy Page 000PWA'
     });
 
     tempPages.forEach((pData, idx) => {
@@ -140,7 +140,7 @@
     currentIndex = 0;
   }
 
-  // Normale bladerlogica + ingebouwde dubbele tik detector voor 00PWA.png
+  // Kliklogica met dubbele tik voor 000PWA.png
   let lastClickTime = 0;
 
   window.addEventListener("click", (e) => {
@@ -150,10 +150,9 @@
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
-    // Als er binnen 300 milliseconden twee keer wordt geklikt, spring direct naar 00PWA.png
     if (timeDiff < 300 && timeDiff > 0) {
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Direct naar 00PWA.png
+      currentIndex = pages.length - 1; // Springt direct naar 000PWA.png
       pages[currentIndex].classList.add('active');
       lastClickTime = 0;
       return;
