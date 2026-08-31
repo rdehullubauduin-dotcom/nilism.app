@@ -99,7 +99,16 @@
     return `/pages/${padded}.png`;
   }
 
-  function initReader() {
+  async function checkPageExists(num) {
+    try {
+      const res = await fetch(getPageSrc(num), { method: 'HEAD' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function initReader() {
     reader.innerHTML = '';
     let tempPages = [];
 
@@ -107,19 +116,34 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
+      // Op nilism.app tonen we alleen de PWA preview gate
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      tempPages.push({ src: getPageSrc(1), alt: 'Page 1' });
-      for (let i = 2; i <= 54; i++) {
-        tempPages.push({ src: getPageSrc(i), alt: `Page ${i}` });
+      // Op Vercel zoeken we automatisch welke genummerde pagina's er wel zijn (tot 150)
+      const maxCheck = 150;
+      const promises = [];
+      for (let i = 1; i <= maxCheck; i++) {
+        promises.push(checkPageExists(i).then(exists => exists ? i : null));
       }
+
+      const results = await Promise.all(promises);
+      let availablePages = results.filter(num => num !== null);
+
+      availablePages.forEach((pageNumber) => {
+        tempPages.push({
+          src: getPageSrc(pageNumber),
+          alt: `Page ${pageNumber}`
+        });
+      });
     }
 
+    // 000PWA.png komt altijd als absolute uitsmijter voor de lange druk
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
     });
 
+    // Render alles naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -131,11 +155,6 @@
       img.loading = idx < 3 ? 'eager' : 'lazy';
       img.decoding = 'async';
       
-      // Foutmelding tonen in de console als een afbeelding ontbreekt
-      img.onerror = () => {
-        console.error("Kan afbeelding niet laden:", pData.src);
-      };
-
       section.appendChild(img);
       reader.appendChild(section);
     });
