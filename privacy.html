@@ -2,103 +2,80 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" href="/icon-192.png">
-
+<title>Privacy — Recenter.ing</title>
 <meta name="theme-color" content="#ffffff">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="nilism">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<title>nilism — privacy</title>
-
 <style>
-  :root {
-    --bg: #ffffff;
-    --fg: #000000;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
+  :root { --bg: #ffffff; --fg: #000000; }
+  * { box-sizing: border-box; }
 
   html, body {
     margin: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg);
+    background-color: var(--bg);
     color: var(--fg);
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: pan-y;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
-  body {
-    font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  }
-
-  .reader {
-    width: 100vw;
-    height: 100dvh;
-    overflow: hidden;
-    background: #ffffff;
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    min-height: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  .page {
-    position: relative;
-    width: 100%;
-    height: 100dvh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: #ffffff;
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
   }
 
-  .page img {
-    height: 100dvh;
-    width: auto;
-    max-width: none;
-    object-fit: contain;
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
-    display: block;
+  p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333333;
+    margin-bottom: 16px;
   }
 
-  @supports (height: 100svh) {
-    .reader, .page {
-      height: 100svh;
-    }
-
-    .page img {
-      height: 100svh;
-    }
+  .back-link {
+    display: inline-block;
+    margin-top: 32px;
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--fg);
+    padding-bottom: 2px;
   }
 
-  @media (display-mode: browser) {
-    .page img {
-      height: 110dvh;
-      width: auto;
-      max-width: none;
-    }
+  footer {
+    margin-top: 48px;
+    font-size: 0.8rem;
+    color: #666666;
   }
 </style>
 </head>
-
 <body>
 
-<main class="reader">
-  <section class="page" aria-label="privacy policy">
-    <img src="/pages/000PWA.png" alt="nilism privacy" loading="eager" decoding="async">
-  </section>
+<main class="container">
+  <div>
+    <h1>Privacy Statement</h1>
+    <p>Recenter.ing respects your privacy. We process minimal data necessary to grant access to the application and process secure payments via our payment providers.</p>
+    <p>We do not track you, sell your data, or use invasive analytics. Access tokens are stored locally on your device via secure storage.</p>
+    <p>For questions or data requests, contact us at: <a href="mailto:support@nilism.app" style="color: inherit;">support@nilism.app</a></p>
+    
+    <a href="/" class="back-link">← Back to Recenter.ing</a>
+  </div>
+
+  <footer>
+    &copy; 2026 Recenter.ing. All rights reserved.
+  </footer>
 </main>
 
 </body>
