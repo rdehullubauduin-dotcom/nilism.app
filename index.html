@@ -22,6 +22,8 @@
     height: 100%;
     overflow: hidden;
     background-color: #ffffff;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .reader {
@@ -47,7 +49,7 @@
     background: #fff;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease-in-out;
+    transition: opacity 0.2s ease-in-out;
   }
 
   .page.active {
@@ -198,43 +200,63 @@
     pages[currentIndex].classList.add('active');
   }
 
-  // Navigatie via 1x aantikken (of klikken) op het scherm
-  document.addEventListener("click", function (e) {
-    // Negeer als er op de gift link wordt geklikt
+  function showPrevPage() {
+    if (!pages.length) return;
+    pages[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex - 1 + pages.length) % pages.length;
+    pages[currentIndex].classList.add('active');
+  }
+
+  // Navigatie via aanraken/klikken: Rechts is volgende, Links is vorige
+  let pressTimer = null;
+  let isLongPress = false;
+
+  document.addEventListener("pointerdown", function (e) {
     if (e.target.closest('.gift-link')) return;
-    showNextPage();
+
+    isLongPress = false;
+    clearTimeout(pressTimer);
+
+    // Lang aanraken (600ms) opent de privacy pagina
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      window.location.href = "/privacy";
+    }, 600);
   });
 
-  // Toetsenbord ondersteuning (spatie / pijl omlaag / rechts voor volgende pagina)
+  document.addEventListener("pointermove", function () {
+    // Als de vinger beweegt, annuleer de langdurige aanraking (is geen nette druk meer)
+    clearTimeout(pressTimer);
+  });
+
+  document.addEventListener("pointerup", function (e) {
+    clearTimeout(pressTimer);
+    if (isLongPress || e.target.closest('.gift-link')) return;
+
+    const screenWidth = window.innerWidth;
+    const clickX = e.clientX;
+
+    // Rechterhelft van het scherm = volgende pagina, linkerhelft = vorige pagina
+    if (clickX > screenWidth / 2) {
+      showNextPage();
+    } else {
+      showPrevPage();
+    }
+  });
+
+  // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
     if (['ArrowDown', 'PageDown', ' ', 'ArrowRight'].includes(e.key)) {
       e.preventDefault();
       showNextPage();
+    } else if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(e.key)) {
+      e.preventDefault();
+      showPrevPage();
     } else if (e.key.toLowerCase() === 'r' && pages.length) {
       e.preventDefault();
       pages[currentIndex].classList.remove('active');
       currentIndex = Math.floor(Math.random() * pages.length);
       pages[currentIndex].classList.add('active');
-    }
-  });
-
-  // Privacy page via exact 3x aantikken binnen 1,2 seconde
-  let tapCount = 0;
-  let tapTimer = null;
-
-  document.addEventListener("pointerdown", function (e) {
-    if (e.target.closest('.gift-link')) return;
-    
-    tapCount++;
-    clearTimeout(tapTimer);
-
-    if (tapCount >= 3) {
-      tapCount = 0;
-      window.location.href = "/privacy";
-    } else {
-      tapTimer = setTimeout(function () {
-        tapCount = 0;
-      }, 1200);
     }
   });
 
