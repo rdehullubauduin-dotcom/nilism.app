@@ -70,7 +70,6 @@
     pointer-events: none;
     display: block;
     margin: auto;
-    /* Iets verder naar boven verschoven (ongeveer een halve regel extra) */
     margin-top: -4.5vh;
   }
 </style>
@@ -88,10 +87,34 @@
   let previousIndex = 0;
   let isViewingPrivacy = false;
 
-  function getRandomPageFileName() {
-    const randNum = Math.floor(Math.random() * 50) + 2;
-    const padded = String(randNum).padStart(3, '0');
-    return `${padded}PWA.png`;
+  // Hulpfunctie om een array (de 50 verzen) willekeurig te schudden (Fisher-Yates shuffle)
+  function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Genereer een volledige geschudde batch van 50 bestandsnamen (002PWA.png t/m 51PWA.png)
+  function generateNewBatch() {
+    let batch = [];
+    for (let i = 2; i <= 51; i++) {
+      const padded = String(i).padStart(3, '0');
+      batch.push(`${padded}PWA.png`);
+    }
+    return shuffleArray(batch);
+  }
+
+  let currentBatch = [];
+
+  function getNextPageFileName() {
+    // Als onze huidige batch leeg is, maken we direct een nieuwe geschudde batch van 50
+    if (currentBatch.length === 0) {
+      currentBatch = generateNewBatch();
+    }
+    return currentBatch.shift(); // Pak de eerste van de geschudde lijst en haal hem weg
   }
 
   function initReader() {
@@ -118,6 +141,7 @@
       return;
     }
 
+    // Start altijd met 001PWA.png als eerste pagina
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
@@ -131,6 +155,9 @@
     startSection.appendChild(startImg);
     reader.appendChild(startSection);
     bookPagesList = [startSection];
+
+    // Reset de batch en zorg dat 001PWA niet direct in de eerste batch zit (of in ieder geval niet dubbel opvalt)
+    currentBatch = generateNewBatch();
 
     const privacySection = document.createElement('section');
     privacySection.className = 'page';
@@ -150,7 +177,7 @@
   }
 
   function addNextRandomPage() {
-    const fileName = getRandomPageFileName();
+    const fileName = getNextPageFileName();
     const section = document.createElement('section');
     section.className = 'page';
     section.setAttribute('aria-label', `Page ${fileName}`);
