@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>nilism</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <meta name="theme-color" content="#ffffff">
@@ -71,24 +72,14 @@
     margin-top: -4vh;
   }
 
-  .gift-link {
-    position: absolute;
-    left: 35%;
-    width: 30%;
-    top: 44%;
-    height: 30%;
-    z-index: 999;
-    display: block;
-  }
-
   @supports (height: 100svh) {
     .page { height: 100svh; }
-    .page img { max-height: 110svh; }
+    .page img { max-height: 100svh; }
   }
 
   @media (display-mode: browser) {
     .page img {
-      max-height: 110dvh;
+      max-height: 100dvh;
     }
   }
 </style>
@@ -96,26 +87,23 @@
 
 <body>
 
-<main class="reader" id="reader" aria-label="Recenter.ing reader"></main>
+<main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('key') === 'nil_access_2026') {
-    localStorage.setItem('nil_access', 'true');
-  }
-
-  const hasAccess = localStorage.getItem('nil_access') === 'true';
   const reader = document.getElementById('reader');
-  const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
-  
   let pages = [];
   let currentIndex = 0;
+  let hasAccess = localStorage.getItem('nilism_access') === 'true';
 
-  async function checkPageExists(pageNumber) {
-    const num = String(pageNumber).padStart(3, '0');
+  function getPageSrc(num) {
+    const padded = String(num).padStart(3, '0');
+    return `/pages/${padded}.png`;
+  }
+
+  async function checkPageExists(num) {
     try {
-      const response = await fetch(`/pages/${num}PWA.png`, { method: 'HEAD' });
-      return response.ok;
+      const res = await fetch(getPageSrc(num), { method: 'HEAD' });
+      return res.ok;
     } catch {
       return false;
     }
@@ -123,43 +111,44 @@
 
   async function initReader() {
     reader.innerHTML = '';
-    
-    // 1. Bouw direct de startpagina's op
     let tempPages = [];
+
     if (!hasAccess) {
-      tempPages.push({ src: '/pages/PWA.png', alt: 'Recenter.ing preview gate', isGift: false });
+      tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate', isGift: false });
     }
     tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
 
-    // 2. Controleer pagina's 2 tot 150 parallel
+    // Beschikbare pagina's ophalen en schudden
     const maxCheck = 150;
     const promises = [];
     for (let i = 2; i <= maxCheck; i++) {
-      promises.push(
-        checkPageExists(i).then(exists => exists ? i : null)
-      );
+      promises.push(checkPageExists(i).then(exists => exists ? i : null));
     }
 
     const results = await Promise.all(promises);
     let availablePages = results.filter(num => num !== null);
 
-    // 3. Schud de resterende pagina's willekeurig door elkaar
     for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
     }
 
-    // 4. Voeg toe aan de array
-    availablePages.forEach((pageNumber, index) => {
-      const isLast = (index === availablePages.length - 1);
+    availablePages.forEach((pageNumber) => {
       tempPages.push({
         src: getPageSrc(pageNumber),
         alt: `Page ${pageNumber}`,
-        isGift: isLast
+        isGift: false
       });
     });
 
-    // 5. Render elementen in DOM
+    // Voeg 000PWA.png toe als de absolute laatste pagina in de array
+    tempPages.push({
+      src: '/pages/000PWA.png',
+      alt: 'Privacy Page',
+      isGift: false
+    });
+
+    // Render alle pagina's naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -173,15 +162,6 @@
       img.decoding = 'async';
       
       section.appendChild(img);
-
-      if (pData.isGift) {
-        const link = document.createElement('a');
-        link.href = GIFT_LINK;
-        link.className = 'gift-link';
-        link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
-        section.appendChild(link);
-      }
-
       reader.appendChild(section);
     });
 
@@ -189,74 +169,46 @@
     currentIndex = 0;
   }
 
-  function getPageSrc(pageNumber) {
-    const num = String(pageNumber).padStart(3, '0');
-    return `/pages/${num}PWA.png`;
-  }
-
-  function showNextPage() {
+  // Bladerlogica via normale klikken / tikken
+  document.addEventListener("click", (e) => {
+    if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
+
     pages[currentIndex].classList.remove('active');
     currentIndex = (currentIndex + 1) % pages.length;
     pages[currentIndex].classList.add('active');
-  }
+  });
 
-  function showPrevPage() {
-    if (!pages.length) return;
-    pages[currentIndex].classList.remove('active');
-    currentIndex = (currentIndex - 1 + pages.length) % pages.length;
-    pages[currentIndex].classList.add('active');
-  }
-
-  // Navigatie via aanraken/klikken: Rechts is volgende, Links is vorige
+  // 2 seconden ingedrukt houden om naar 000PWA.png te springen
   let pressTimer = null;
-  let isLongPress = false;
 
   document.addEventListener("pointerdown", function (e) {
     if (e.target.closest('.gift-link')) return;
-
-    isLongPress = false;
     clearTimeout(pressTimer);
 
-    // Lang aanraken (600ms) opent de privacy pagina
     pressTimer = setTimeout(() => {
-      isLongPress = true;
-      window.location.href = "/privacy";
-    }, 600);
+      if (!pages.length) return;
+      pages[currentIndex].classList.remove('active');
+      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
+      pages[currentIndex].classList.add('active');
+    }, 2000); // 2000 milliseconden = 2 seconden
   });
 
-  document.addEventListener("pointermove", function () {
-    // Als de vinger beweegt, annuleer de langdurige aanraking (is geen nette druk meer)
-    clearTimeout(pressTimer);
-  });
+  document.addEventListener("pointermove", () => clearTimeout(pressTimer));
+  document.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
-  document.addEventListener("pointerup", function (e) {
-    clearTimeout(pressTimer);
-    if (isLongPress || e.target.closest('.gift-link')) return;
-
-    const screenWidth = window.innerWidth;
-    const clickX = e.clientX;
-
-    // Rechterhelft van het scherm = volgende pagina, linkerhelft = vorige pagina
-    if (clickX > screenWidth / 2) {
-      showNextPage();
-    } else {
-      showPrevPage();
-    }
-  });
-
-  // Toetsenbord ondersteuning
+  // Toetsenbordondersteuning
   window.addEventListener('keydown', (e) => {
-    if (['ArrowDown', 'PageDown', ' ', 'ArrowRight'].includes(e.key)) {
-      e.preventDefault();
-      showNextPage();
-    } else if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(e.key)) {
-      e.preventDefault();
-      showPrevPage();
-    } else if (e.key.toLowerCase() === 'r' && pages.length) {
+    if (!pages.length) return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
       e.preventDefault();
       pages[currentIndex].classList.remove('active');
-      currentIndex = Math.floor(Math.random() * pages.length);
+      currentIndex = (currentIndex + 1) % pages.length;
+      pages[currentIndex].classList.add('active');
+    } else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) {
+      e.preventDefault();
+      pages[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex - 1 + pages.length) % pages.length;
       pages[currentIndex].classList.add('active');
     }
   });
