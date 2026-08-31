@@ -60,7 +60,6 @@
   }
 
   .page img {
-    /* Fijne, iets rijkere zoom (tussen subtiel en te groot in) */
     max-width: 112vw;
     max-height: 112dvh;
     width: auto;
@@ -116,7 +115,7 @@
       });
     }
 
-    // 00PWA.png als uitsmijter bij 2 seconden aanraken
+    // 00PWA.png toevoegen als uitsmijter achteraan
     tempPages.push({
       src: '/pages/00PWA.png',
       alt: 'Privacy Page'
@@ -157,18 +156,18 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om direct naar 00PWA.png te springen
+  // Directe en betrouwbare 2-seconden timer met touch/pointer events
   let pressTimer = null;
-  let isLongPressTriggered = false;
+  let isLongPress = false;
 
   window.addEventListener("pointerdown", (e) => {
     if (e.target.closest('.gift-link')) return;
-    isLongPressTriggered = false;
+    isLongPress = false;
     clearTimeout(pressTimer);
 
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
-      isLongPressTriggered = true;
+      isLongPress = true;
       pages[currentIndex].classList.remove('active');
       currentIndex = pages.length - 1; // Direct naar 00PWA.png
       pages[currentIndex].classList.add('active');
@@ -177,11 +176,12 @@
 
   window.addEventListener("pointermove", () => clearTimeout(pressTimer));
   window.addEventListener("pointerup", () => clearTimeout(pressTimer));
+  window.addEventListener("pointercancel", () => clearTimeout(pressTimer));
 
   window.addEventListener("click", (e) => {
-    if (isLongPressTriggered) {
+    if (isLongPress) {
       e.stopImmediatePropagation();
-      isLongPressTriggered = false;
+      isLongPress = false;
     }
   }, true);
 
