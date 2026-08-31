@@ -94,21 +94,7 @@
   let pages = [];
   let currentIndex = 0;
 
-  function getPageSrc(num) {
-    const padded = String(num).padStart(3, '0');
-    return `/pages/${padded}.png`;
-  }
-
-  async function checkPageExists(num) {
-    try {
-      const res = await fetch(getPageSrc(num), { method: 'HEAD' });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  async function initReader() {
+  function initReader() {
     reader.innerHTML = '';
     let tempPages = [];
 
@@ -116,32 +102,40 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      // Op nilism.app tonen we de PWA preview gate
+      // Op nilism.app tonen we enkel PWA.png als preview gate
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      // Op Vercel laden we al je genummerde pagina's dynamisch in
-      let availablePages = [];
-      for (let i = 1; i <= 150; i++) {
-        if (await checkPageExists(i)) {
-          availablePages.push(i);
-        }
+      // 1. Altijd beginnen bij 001PWA.png
+      tempPages.push({ src: '/pages/001PWA.png', alt: 'Page 001PWA' });
+
+      // 2. Genereer array van 002 t/m 051
+      let bookPages = [];
+      for (let i = 2; i <= 51; i++) {
+        const padded = String(i).padStart(3, '0');
+        bookPages.push(`${padded}PWA.png`);
       }
 
-      availablePages.forEach((pageNumber) => {
+      // Schud de pagina's van 002PWA t/m 051PWA willekeurig door elkaar
+      for (let j = bookPages.length - 1; j > 0; j--) {
+        const rand = Math.floor(Math.random() * (j + 1));
+        [bookPages[j], bookPages[rand]] = [bookPages[rand], bookPages[j]];
+      }
+
+      bookPages.forEach((fileName) => {
         tempPages.push({
-          src: getPageSrc(pageNumber),
-          alt: `Page ${pageNumber}`
+          src: `/pages/${fileName}`,
+          alt: `Page ${fileName}`
         });
       });
     }
 
-    // 000PWA.png (privacy) komt als absolute uitsmijter achteraan
+    // 3. 000PWA.png komt altijd als absolute uitsmijter voor de lange druk van 2 seconden
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
     });
 
-    // Render alles naar de DOM
+    // Render alles direct naar de DOM met exact dezelfde zoom en centrering
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -161,6 +155,7 @@
     currentIndex = 0;
   }
 
+  // Normaal bladeren via klikken
   document.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
@@ -170,7 +165,7 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om direct naar 000PWA.png (privacy) te springen met exact dezelfde zoom/centrering
+  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
@@ -180,7 +175,7 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; 
+      currentIndex = pages.length - 1; // Spring direct naar 000PWA.png
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
@@ -188,6 +183,7 @@
   document.addEventListener("pointermove", () => clearTimeout(pressTimer));
   document.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
+  // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
     if (!pages.length) return;
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
