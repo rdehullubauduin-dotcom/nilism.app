@@ -113,37 +113,37 @@
     reader.innerHTML = '';
     let tempPages = [];
 
-    // Als je GEEN access hebt, zie je enkel PWA.png als preview gate
+    // 1. Als er GEEN access is, tonen we de PWA-previewgate als startscherm
     if (!hasAccess) {
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate', isGift: false });
-    } else {
-      // Als je WEL access hebt, laadt het normale boek (Pagina 1 + geschudde pagina's 2 t/m 150)
-      tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
-
-      const maxCheck = 150;
-      const promises = [];
-      for (let i = 2; i <= maxCheck; i++) {
-        promises.push(checkPageExists(i).then(exists => exists ? i : null));
-      }
-
-      const results = await Promise.all(promises);
-      let availablePages = results.filter(num => num !== null);
-
-      for (let j = availablePages.length - 1; j > 0; j--) {
-        const rand = Math.floor(Math.random() * (j + 1));
-        [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
-      }
-
-      availablePages.forEach((pageNumber) => {
-        tempPages.push({
-          src: getPageSrc(pageNumber),
-          alt: `Page ${pageNumber}`,
-          isGift: false
-        });
-      });
     }
 
-    // 000PWA.png komt altijd als de absolute laatste pagina, bereikbaar via de lange druk van 2 seconden
+    // 2. Altijd pagina 1 en de geschudde boekpagina's inladen
+    tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
+
+    const maxCheck = 150;
+    const promises = [];
+    for (let i = 2; i <= maxCheck; i++) {
+      promises.push(checkPageExists(i).then(exists => exists ? i : null));
+    }
+
+    const results = await Promise.all(promises);
+    let availablePages = results.filter(num => num !== null);
+
+    for (let j = availablePages.length - 1; j > 0; j--) {
+      const rand = Math.floor(Math.random() * (j + 1));
+      [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
+    }
+
+    availablePages.forEach((pageNumber) => {
+      tempPages.push({
+        src: getPageSrc(pageNumber),
+        alt: `Page ${pageNumber}`,
+        isGift: false
+      });
+    });
+
+    // 3. 000PWA.png komt altijd als de absolute laatste pagina (bereikbaar via de lange druk)
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page',
@@ -171,25 +171,17 @@
     currentIndex = 0;
   }
 
-  // Bladerlogica via normale klikken / tikken (werkt alleen als er meerdere pagina's zijn, of om te sluiten)
+  // Normale bladerlogica via klikken / tikken
   document.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
-
-    // Als je op de privacy-pagina (laatste pagina) staat en klikt, ga je weer terug naar de startpagina
-    if (currentIndex === pages.length - 1) {
-      pages[currentIndex].classList.remove('active');
-      currentIndex = 0;
-      pages[currentIndex].classList.add('active');
-      return;
-    }
 
     pages[currentIndex].classList.remove('active');
     currentIndex = (currentIndex + 1) % pages.length;
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om naar 000PWA.png te springen
+  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
@@ -199,7 +191,7 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring direct naar 000PWA.png
+      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
       pages[currentIndex].classList.add('active');
     }, 2000); // 2000 milliseconden = 2 seconden
   });
@@ -212,12 +204,8 @@
     if (!pages.length) return;
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
       e.preventDefault();
-      if (currentIndex === pages.length - 1) {
-        currentIndex = 0;
-      } else {
-        pages[currentIndex].classList.remove('active');
-        currentIndex = (currentIndex + 1) % pages.length;
-      }
+      pages[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex + 1) % pages.length;
       pages[currentIndex].classList.add('active');
     } else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) {
       e.preventDefault();
