@@ -30,28 +30,29 @@
     left: 0;
     width: 100%;
     height: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    overflow: hidden;
     background: #fff;
   }
 
-  .reader::-webkit-scrollbar { display: none; }
-
   .page {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     overflow: hidden;
     background: #fff;
-    flex-shrink: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease-in-out;
+  }
+
+  .page.active {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .page img {
@@ -92,13 +93,9 @@
 
 <body>
 
-<main class="reader" id="reader" aria-label="Recenter.ing full reader"></main>
+<main class="reader" id="reader" aria-label="Recenter.ing reader"></main>
 
 <script>
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
-  }
-
   const params = new URLSearchParams(window.location.search);
   if (params.get('key') === 'nil_access_2026') {
     localStorage.setItem('nil_access', 'true');
@@ -107,6 +104,9 @@
   const hasAccess = localStorage.getItem('nil_access') === 'true';
   const reader = document.getElementById('reader');
   const GIFT_LINK = "https://buy.stripe.com/00weVc0UU2jj3KU4rq28801";
+  
+  let pages = [];
+  let currentIndex = 0;
 
   async function checkPageExists(pageNumber) {
     const num = String(pageNumber).padStart(3, '0');
@@ -121,13 +121,14 @@
   async function initReader() {
     reader.innerHTML = '';
     
-    // 1. Bouw direct de startpagina's op zodat de gebruiker niet hoeft te wachten
+    // 1. Bouw direct de startpagina's op
+    let tempPages = [];
     if (!hasAccess) {
-      appendCustomPage('/pages/PWA.png', 'Recenter.ing preview gate', 0);
+      tempPages.push({ src: '/pages/PWA.png', alt: 'Recenter.ing preview gate', isGift: false });
     }
-    appendPage(1, hasAccess ? 0 : 1);
+    tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
 
-    // 2. Controleer pagina's 2 tot 150 gelijktijdig (bliksemsnel in parallel)
+    // 2. Controleer pagina's 2 tot 150 parallel
     const maxCheck = 150;
     const promises = [];
     for (let i = 2; i <= maxCheck; i++) {
@@ -139,114 +140,101 @@
     const results = await Promise.all(promises);
     let availablePages = results.filter(num => num !== null);
 
-    // 3. Schud de resterende pagina's willekeurig door elkaar (Fisher-Yates shuffle)
+    // 3. Schud de resterende pagina's willekeurig door elkaar
     for (let j = availablePages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
       [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
     }
 
-    // 4. Voeg de willekeurige pagina's toe aan de lezer
-    const offsetIndex = hasAccess ? 1 : 2;
+    // 4. Voeg toe aan de array
     availablePages.forEach((pageNumber, index) => {
       const isLast = (index === availablePages.length - 1);
-      appendPage(pageNumber, index + offsetIndex, isLast);
+      tempPages.push({
+        src: getPageSrc(pageNumber),
+        alt: `Page ${pageNumber}`,
+        isGift: isLast
+      });
     });
-    
-    reader.scrollTop = 0;
-  }
 
-  function appendCustomPage(src, altText, index) {
-    const section = document.createElement('section');
-    section.className = 'page';
-    section.id = `page-${index + 1}`;
-    section.setAttribute('aria-label', altText);
+    // 5. Render elementen in DOM
+    tempPages.forEach((pData, idx) => {
+      const section = document.createElement('section');
+      section.className = 'page' + (idx === 0 ? ' active' : '');
+      section.id = `page-${idx + 1}`;
+      section.setAttribute('aria-label', pData.alt);
 
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = altText;
-    img.loading = 'eager';
-    img.decoding = 'async';
-    
-    section.appendChild(img);
-    reader.appendChild(section);
-  }
+      const img = document.createElement('img');
+      img.src = pData.src;
+      img.alt = pData.alt;
+      img.loading = idx < 3 ? 'eager' : 'lazy';
+      img.decoding = 'async';
+      
+      section.appendChild(img);
 
-  function appendPage(pageNumber, index, isLast = false) {
-    const num = String(pageNumber).padStart(3, '0');
-    const section = document.createElement('section');
-    section.className = 'page';
-    section.id = `page-${index + 1}`;
-    section.setAttribute('aria-label', `Page ${pageNumber}`);
-
-    const img = document.createElement('img');
-    img.src = `/pages/${num}PWA.png`;
-    img.alt = `Recenter.ing page ${pageNumber}`;
-    img.loading = index < 3 ? 'eager' : 'lazy';
-    img.decoding = 'async';
-    
-    section.appendChild(img);
-
-    if (isLast) {
-      const link = document.createElement('a');
-      link.href = GIFT_LINK;
-      link.className = 'gift-link';
-      link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
-      section.appendChild(link);
-    }
-
-    reader.appendChild(section);
-  }
-
-  function getCurrentIndex() {
-    const pages = document.querySelectorAll('.page');
-    if (!pages.length) return 0;
-    const scrollTop = reader.scrollTop;
-    let closestIndex = 0;
-    let minDistance = Infinity;
-
-    pages.forEach((page, index) => {
-      const distance = Math.abs(page.offsetTop - scrollTop);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIndex = index;
+      if (pData.isGift) {
+        const link = document.createElement('a');
+        link.href = GIFT_LINK;
+        link.className = 'gift-link';
+        link.setAttribute('aria-label', 'Share Recenter.ing as a friend gift');
+        section.appendChild(link);
       }
+
+      reader.appendChild(section);
     });
-    return closestIndex;
+
+    pages = document.querySelectorAll('.page');
+    currentIndex = 0;
   }
 
-  window.addEventListener('keydown', (e) => {
-    const pages = document.querySelectorAll('.page');
-    if (!pages.length) return;
+  function getPageSrc(pageNumber) {
+    const num = String(pageNumber).padStart(3, '0');
+    return `/pages/${num}PWA.png`;
+  }
 
-    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowRight') {
+  function showNextPage() {
+    if (!pages.length) return;
+    pages[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex + 1) % pages.length;
+    pages[currentIndex].classList.add('active');
+  }
+
+  // Navigatie via 1x aantikken (of klikken) op het scherm
+  document.addEventListener("click", function (e) {
+    // Negeer als er op de gift link wordt geklikt
+    if (e.target.closest('.gift-link')) return;
+    showNextPage();
+  });
+
+  // Toetsenbord ondersteuning (spatie / pijl omlaag / rechts voor volgende pagina)
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowDown', 'PageDown', ' ', 'ArrowRight'].includes(e.key)) {
       e.preventDefault();
-      const nextIndex = Math.min(pages.length - 1, getCurrentIndex() + 1);
-      pages[nextIndex].scrollIntoView({ behavior: 'smooth' });
-    } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
+      showNextPage();
+    } else if (e.key.toLowerCase() === 'r' && pages.length) {
       e.preventDefault();
-      const prevIndex = Math.max(0, getCurrentIndex() - 1);
-      pages[prevIndex].scrollIntoView({ behavior: 'smooth' });
-    } else if (e.key.toLowerCase() === 'r') {
-      e.preventDefault();
-      const randomIndex = Math.floor(Math.random() * pages.length);
-      pages[randomIndex].scrollIntoView({ behavior: 'smooth' });
+      pages[currentIndex].classList.remove('active');
+      currentIndex = Math.floor(Math.random() * pages.length);
+      pages[currentIndex].classList.add('active');
     }
   });
 
+  // Privacy page via exact 3x aantikken binnen 1,2 seconde
   let tapCount = 0;
   let tapTimer = null;
 
-  document.addEventListener("pointerdown", function () {
+  document.addEventListener("pointerdown", function (e) {
+    if (e.target.closest('.gift-link')) return;
+    
     tapCount++;
     clearTimeout(tapTimer);
 
-    if (tapCount >= 5) {
+    if (tapCount >= 3) {
       tapCount = 0;
       window.location.href = "/privacy";
     } else {
       tapTimer = setTimeout(function () {
         tapCount = 0;
-      }, 1500);
+      }, 1200);
     }
   });
 
