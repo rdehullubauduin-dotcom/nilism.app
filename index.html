@@ -70,7 +70,8 @@
     pointer-events: none;
     display: block;
     margin: auto;
-    margin-top: -3vh;
+    /* Iets verder naar boven verschoven (ongeveer een halve regel extra) */
+    margin-top: -4.5vh;
   }
 </style>
 </head>
@@ -81,14 +82,13 @@
 
 <script>
   const reader = document.getElementById('reader');
-  let bookPagesList = []; // Bevat de oneindige/willekeurige stroom
-  let privacyPageElement = null; // De vaste 000PWA.png pagina
+  let bookPagesList = []; 
+  let privacyPageElement = null; 
   let currentIndex = 0;
   let previousIndex = 0;
   let isViewingPrivacy = false;
 
   function getRandomPageFileName() {
-    // Genereer willekeurig een getal van 2 t/m 51
     const randNum = Math.floor(Math.random() * 50) + 2;
     const padded = String(randNum).padStart(3, '0');
     return `${padded}PWA.png`;
@@ -101,7 +101,6 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      // Op de live domein tonen we alleen de PWA preview gate
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
@@ -119,7 +118,6 @@
       return;
     }
 
-    // 1. Maak de vaste startpagina: 001PWA.png
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
@@ -134,7 +132,6 @@
     reader.appendChild(startSection);
     bookPagesList = [startSection];
 
-    // 2. Maak de privacy-pagina: 000PWA.png (zit los van de normale stroom)
     const privacySection = document.createElement('section');
     privacySection.className = 'page';
     privacySection.setAttribute('aria-label', 'Privacy Page 000PWA');
@@ -152,7 +149,6 @@
     currentIndex = 0;
   }
 
-  // Functie om dynamisch een nieuwe willekeurige pagina toe te voegen aan de lijst als je naar rechts klikt
   function addNextRandomPage() {
     const fileName = getRandomPageFileName();
     const section = document.createElement('section');
@@ -170,7 +166,6 @@
     bookPagesList.push(section);
   }
 
-  // Kliklogica: dubbele tik voor privacy, anders links/rechts bladeren
   let lastClickTime = 0;
 
   window.addEventListener("click", (e) => {
@@ -183,16 +178,13 @@
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
-    // Dubbele tik activeert/deactiveert de privacy-pagina (000PWA.png)
     if (timeDiff < 300 && timeDiff > 0) {
       if (isViewingPrivacy) {
-        // Terug naar waar je gebleven was
         privacyPageElement.classList.remove('active');
         currentIndex = previousIndex;
         bookPagesList[currentIndex].classList.add('active');
         isViewingPrivacy = false;
       } else {
-        // Sla huidige index op en spring naar privacy
         previousIndex = currentIndex;
         if (!isViewingPrivacy) {
           bookPagesList[currentIndex].classList.remove('active');
@@ -206,7 +198,6 @@
 
     lastClickTime = currentTime;
 
-    // Als we naar privacy kijken, sluit privacy dan bij een normale klik
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
       currentIndex = previousIndex;
@@ -215,18 +206,14 @@
       return;
     }
 
-    // Normaal bladeren
     bookPagesList[currentIndex].classList.remove('active');
 
     if (e.clientX < window.innerWidth / 2) {
-      // Linkerkant geklikt -> ga naar vorig (minimum is index 0, je kunt niet voorbij 001PWA.png terug)
       if (currentIndex > 0) {
         currentIndex--;
       }
     } else {
-      // Rechterkant geklikt -> ga naar volgende
       currentIndex++;
-      // Als we op het punt komen dat nog niet bestaat in de willekeurige stroom, genereer een nieuwe willekeurige pagina
       if (currentIndex >= bookPagesList.length) {
         addNextRandomPage();
       }
@@ -235,7 +222,6 @@
     bookPagesList[currentIndex].classList.add('active');
   });
 
-  // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
     if (!bookPagesList.length) return;
     const hostname = window.location.hostname;
