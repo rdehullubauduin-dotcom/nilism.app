@@ -93,6 +93,8 @@
   const reader = document.getElementById('reader');
   let pages = [];
   let currentIndex = 0;
+  
+  // Handige test-optie: zet dit tijdelijk op 'false' om zeker te weten dat PWA.png laadt, of 'true' voor het boek
   let hasAccess = localStorage.getItem('nilism_access') === 'true';
 
   function getPageSrc(num) {
@@ -100,50 +102,46 @@
     return `/pages/${padded}.png`;
   }
 
-  async function initReader() {
+  function initReader() {
     reader.innerHTML = '';
     let tempPages = [];
 
-    // 1. Preview gate als er geen access is
+    // 1. De preview gate voor wie geen abo heeft
     if (!hasAccess) {
-      tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate', isGift: false });
+      tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     }
 
     // 2. Pagina 1
-    tempPages.push({ src: getPageSrc(1), alt: 'Page 1', isGift: false });
+    tempPages.push({ src: getPageSrc(1), alt: 'Page 1' });
 
-    // 3. Forceer direct alle pagina's van 2 t/m 54 (of tot waar je manuscript loopt)
-    let availablePages = [];
+    // 3. Alle boekpagina's van 2 t/m 54 toevoegen en willekeurig schudden
+    let bookPages = [];
     for (let i = 2; i <= 54; i++) {
-      availablePages.push(i);
+      bookPages.push(i);
     }
 
-    // Schud de pagina's willekeurig
-    for (let j = availablePages.length - 1; j > 0; j--) {
+    for (let j = bookPages.length - 1; j > 0; j--) {
       const rand = Math.floor(Math.random() * (j + 1));
-      [availablePages[j], availablePages[rand]] = [availablePages[rand], availablePages[j]];
+      [bookPages[j], bookPages[rand]] = [bookPages[rand], bookPages[j]];
     }
 
-    availablePages.forEach((pageNumber) => {
+    bookPages.forEach((pageNumber) => {
       tempPages.push({
         src: getPageSrc(pageNumber),
-        alt: `Page ${pageNumber}`,
-        isGift: false
+        alt: `Page ${pageNumber}`
       });
     });
 
-    // 4. 000PWA.png als absolute laatste pagina voor de lange druk
+    // 4. 000PWA.png als absolute uitsmijter voor de lange druk
     tempPages.push({
       src: '/pages/000PWA.png',
-      alt: 'Privacy Page',
-      isGift: false
+      alt: 'Privacy Page'
     });
 
     // Render alles naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
-      section.id = `page-${idx + 1}`;
       section.setAttribute('aria-label', pData.alt);
 
       const img = document.createElement('img');
@@ -160,7 +158,7 @@
     currentIndex = 0;
   }
 
-  // Klik om te bladeren
+  // Normaal bladeren via klikken
   document.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
@@ -170,7 +168,7 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om naar 000PWA.png te springen
+  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
@@ -180,7 +178,7 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring naar 000PWA.png
+      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
@@ -188,7 +186,7 @@
   document.addEventListener("pointermove", () => clearTimeout(pressTimer));
   document.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
-  // Toetsenbord
+  // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
     if (!pages.length) return;
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
