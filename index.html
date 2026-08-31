@@ -104,27 +104,22 @@
     let tempPages = [];
 
     const hostname = window.location.hostname;
-    // Check of we op het echte live domein zitten
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      // Op nilism.app tonen we alleen de PWA-previewgate
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      // Op Vercel (of lokaal) tonen we het hele boek (1 t/m 54)
       tempPages.push({ src: getPageSrc(1), alt: 'Page 1' });
       for (let i = 2; i <= 54; i++) {
         tempPages.push({ src: getPageSrc(i), alt: `Page ${i}` });
       }
     }
 
-    // 000PWA.png komt altijd als absolute uitsmijter voor de lange druk van 2 seconden
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
     });
 
-    // Render alles naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -136,6 +131,11 @@
       img.loading = idx < 3 ? 'eager' : 'lazy';
       img.decoding = 'async';
       
+      // Foutmelding tonen in de console als een afbeelding ontbreekt
+      img.onerror = () => {
+        console.error("Kan afbeelding niet laden:", pData.src);
+      };
+
       section.appendChild(img);
       reader.appendChild(section);
     });
@@ -144,7 +144,6 @@
     currentIndex = 0;
   }
 
-  // Normaal bladeren via klikken
   document.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
@@ -154,7 +153,6 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden om direct naar 000PWA.png te springen
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
@@ -164,7 +162,7 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
+      currentIndex = pages.length - 1; 
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
@@ -172,7 +170,6 @@
   document.addEventListener("pointermove", () => clearTimeout(pressTimer));
   document.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
-  // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
     if (!pages.length) return;
     if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
