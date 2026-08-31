@@ -25,6 +25,7 @@
     background-color: #ffffff;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: manipulation;
   }
 
   .reader {
@@ -59,9 +60,9 @@
   }
 
   .page img {
-    /* Forse vergroting zodat het daadwerkelijk meer inzoomt */
-    max-width: 140vw;
-    max-height: 140dvh;
+    /* Perfect gebalanceerde zoom: net iets groter dan passend zonder dat het scherm uit knalt */
+    max-width: 104vw;
+    max-height: 104dvh;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -138,7 +139,7 @@
     currentIndex = 0;
   }
 
-  // Kliklogica: links = achteruit, rechts = vooruit (directe afhandeling op window)
+  // Kliklogica: links = achteruit, rechts = vooruit
   window.addEventListener("click", (e) => {
     if (e.target.closest('.gift-link')) return;
     if (!pages.length) return;
@@ -154,23 +155,39 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // 2 seconden ingedrukt houden voor privacy (000PWA.png)
+  // Robuuste 2-seconden timer voor de privacy-pagina (000PWA.png)
   let pressTimer = null;
+  let isLongPressTriggered = false;
 
   window.addEventListener("pointerdown", (e) => {
     if (e.target.closest('.gift-link')) return;
+    isLongPressTriggered = false;
     clearTimeout(pressTimer);
 
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
+      isLongPressTriggered = true;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1;
+      currentIndex = pages.length - 1; // Direct naar de laatste pagina (000PWA.png)
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
 
-  window.addEventListener("pointermove", () => clearTimeout(pressTimer));
-  window.addEventListener("pointerup", () => clearTimeout(pressTimer));
+  window.addEventListener("pointermove", () => {
+    clearTimeout(pressTimer);
+  });
+
+  window.addEventListener("pointerup", () => {
+    clearTimeout(pressTimer);
+  });
+
+  // Voorkom dat een lange druk ook direct een normale klik activeert
+  window.addEventListener("click", (e) => {
+    if (isLongPressTriggered) {
+      e.stopImmediatePropagation();
+      isLongPressTriggered = false;
+    }
+  }, true);
 
   // Toetsenbord ondersteuning
   window.addEventListener('keydown', (e) => {
