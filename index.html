@@ -60,9 +60,9 @@
   }
 
   .page img {
-    /* Perfect gebalanceerde zoom: net iets groter dan passend zonder dat het scherm uit knalt */
-    max-width: 104vw;
-    max-height: 104dvh;
+    /* Fijne, iets rijkere zoom (tussen subtiel en te groot in) */
+    max-width: 112vw;
+    max-height: 112dvh;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -71,6 +71,7 @@
     pointer-events: none;
     display: block;
     margin: auto;
+    margin-top: -3vh;
   }
 </style>
 </head>
@@ -115,8 +116,9 @@
       });
     }
 
+    // 00PWA.png als uitsmijter bij 2 seconden aanraken
     tempPages.push({
-      src: '/pages/000PWA.png',
+      src: '/pages/00PWA.png',
       alt: 'Privacy Page'
     });
 
@@ -155,7 +157,7 @@
     pages[currentIndex].classList.add('active');
   });
 
-  // Robuuste 2-seconden timer voor de privacy-pagina (000PWA.png)
+  // 2 seconden ingedrukt houden om direct naar 00PWA.png te springen
   let pressTimer = null;
   let isLongPressTriggered = false;
 
@@ -168,20 +170,14 @@
       if (!pages.length) return;
       isLongPressTriggered = true;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Direct naar de laatste pagina (000PWA.png)
+      currentIndex = pages.length - 1; // Direct naar 00PWA.png
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
 
-  window.addEventListener("pointermove", () => {
-    clearTimeout(pressTimer);
-  });
+  window.addEventListener("pointermove", () => clearTimeout(pressTimer));
+  window.addEventListener("pointerup", () => clearTimeout(pressTimer));
 
-  window.addEventListener("pointerup", () => {
-    clearTimeout(pressTimer);
-  });
-
-  // Voorkom dat een lange druk ook direct een normale klik activeert
   window.addEventListener("click", (e) => {
     if (isLongPressTriggered) {
       e.stopImmediatePropagation();
