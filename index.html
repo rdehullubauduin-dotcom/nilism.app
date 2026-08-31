@@ -93,9 +93,6 @@
   const reader = document.getElementById('reader');
   let pages = [];
   let currentIndex = 0;
-  
-  // Handige test-optie: zet dit tijdelijk op 'false' om zeker te weten dat PWA.png laadt, of 'true' voor het boek
-  let hasAccess = localStorage.getItem('nilism_access') === 'true';
 
   function getPageSrc(num) {
     const padded = String(num).padStart(3, '0');
@@ -106,15 +103,10 @@
     reader.innerHTML = '';
     let tempPages = [];
 
-    // 1. De preview gate voor wie geen abo heeft
-    if (!hasAccess) {
-      tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
-    }
-
-    // 2. Pagina 1
+    // 1. Altijd beginnen met Pagina 1 (zoals eerst)
     tempPages.push({ src: getPageSrc(1), alt: 'Page 1' });
 
-    // 3. Alle boekpagina's van 2 t/m 54 toevoegen en willekeurig schudden
+    // 2. Alle geschudde boekpagina's van 2 t/m 54 toevoegen
     let bookPages = [];
     for (let i = 2; i <= 54; i++) {
       bookPages.push(i);
@@ -132,7 +124,7 @@
       });
     });
 
-    // 4. 000PWA.png als absolute uitsmijter voor de lange druk
+    // 3. 000PWA.png als absolute uitsmijter voor de lange druk van 2 seconden
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
