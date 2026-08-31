@@ -103,28 +103,31 @@
     reader.innerHTML = '';
     let tempPages = [];
 
-    // Controleer of we op de live domeinnaam (nilism.app) zitten of op een Vercel-preview URL
     const hostname = window.location.hostname;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Controleer of we op de live domeinnaam zitten (zonder geldige URL-sleutel)
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+    const hasKey = urlParams.get('key') === 'nil_access_2026';
 
-    if (isLiveDomain) {
-      // Op nilism.app tonen we enkel PWA.png als preview gate
+    if (isLiveDomain && !hasKey) {
+      // Live domein zonder key toont enkel PWA.png
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      // Op Vercel (proefversie) tonen we de hele inhoud: Pagina 1 t/m 54
+      // Vercel of live domein MET de juiste key toont het hele boek (Pagina 1 t/m 54)
       tempPages.push({ src: getPageSrc(1), alt: 'Page 1' });
       for (let i = 2; i <= 54; i++) {
         tempPages.push({ src: getPageSrc(i), alt: `Page ${i}` });
       }
     }
 
-    // 000PWA.png komt altijd als absolute uitsmijter, bereikbaar via 2 seconden aanraken
+    // 000PWA.png komt altijd als absolute uitsmijter voor de lange druk van 2 seconden
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
     });
 
-    // Render alles naar de DOM met exact dezelfde styling, zoom en centrering
+    // Render alles naar de DOM
     tempPages.forEach((pData, idx) => {
       const section = document.createElement('section');
       section.className = 'page' + (idx === 0 ? ' active' : '');
@@ -164,7 +167,7 @@
     pressTimer = setTimeout(() => {
       if (!pages.length) return;
       pages[currentIndex].classList.remove('active');
-      currentIndex = pages.length - 1; // Spring direct naar 000PWA.png
+      currentIndex = pages.length - 1; // Spring direct naar de laatste pagina (000PWA.png)
       pages[currentIndex].classList.add('active');
     }, 2000);
   });
