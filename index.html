@@ -55,8 +55,8 @@
   }
 
   .page img {
-    max-width: 100vw;
-    max-height: 100dvh;
+    max-width: 110vw;
+    max-height: 110dvh;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -79,12 +79,12 @@
 
   @supports (height: 100svh) {
     .page { height: 100svh; }
-    .page img { max-height: 100svh; }
+    .page img { max-height: 110svh; }
   }
 
   @media (display-mode: browser) {
     .page img {
-      max-height: 100dvh;
+      max-height: 110dvh;
     }
   }
 </style>
@@ -240,13 +240,13 @@
     tapCount++;
     clearTimeout(tapTimer);
 
-    if (tapCount >= 3) {
+    if (tapCount >= 5) {
       tapCount = 0;
       window.location.href = "/privacy";
     } else {
       tapTimer = setTimeout(function () {
         tapCount = 0;
-      }, 1000);
+      }, 1500);
     }
   });
 
