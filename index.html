@@ -116,18 +116,16 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
-      // Op nilism.app tonen we alleen de PWA preview gate
+      // Op nilism.app tonen we de PWA preview gate
       tempPages.push({ src: '/pages/PWA.png', alt: 'Preview gate' });
     } else {
-      // Op Vercel zoeken we automatisch welke genummerde pagina's er wel zijn (tot 150)
-      const maxCheck = 150;
-      const promises = [];
-      for (let i = 1; i <= maxCheck; i++) {
-        promises.push(checkPageExists(i).then(exists => exists ? i : null));
+      // Op Vercel laden we al je genummerde pagina's dynamisch in
+      let availablePages = [];
+      for (let i = 1; i <= 150; i++) {
+        if (await checkPageExists(i)) {
+          availablePages.push(i);
+        }
       }
-
-      const results = await Promise.all(promises);
-      let availablePages = results.filter(num => num !== null);
 
       availablePages.forEach((pageNumber) => {
         tempPages.push({
@@ -137,7 +135,7 @@
       });
     }
 
-    // 000PWA.png komt altijd als absolute uitsmijter voor de lange druk
+    // 000PWA.png (privacy) komt als absolute uitsmijter achteraan
     tempPages.push({
       src: '/pages/000PWA.png',
       alt: 'Privacy Page'
@@ -172,6 +170,7 @@
     pages[currentIndex].classList.add('active');
   });
 
+  // 2 seconden ingedrukt houden om direct naar 000PWA.png (privacy) te springen met exact dezelfde zoom/centrering
   let pressTimer = null;
 
   document.addEventListener("pointerdown", function (e) {
