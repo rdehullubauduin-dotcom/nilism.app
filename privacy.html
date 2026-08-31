@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Privacy — nilism</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <meta name="theme-color" content="#ffffff">
@@ -48,12 +47,19 @@
     align-items: center;
     overflow: hidden;
     background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .page.active {
     opacity: 1;
+    pointer-events: auto;
   }
 
   .page img {
-    max-width: 100vw;
-    max-height: 100dvh;
+    max-width: 110vw;
+    max-height: 110dvh;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -63,16 +69,6 @@
     display: block;
     margin: auto;
     margin-top: -4vh;
-  }
-
-  .back-area {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 999;
-    cursor: pointer;
   }
 
   @supports (height: 100svh) {
@@ -90,20 +86,41 @@
 
 <body>
 
-<main class="reader" id="reader" aria-label="Privacy reader">
-  <section class="page active" aria-label="000PWA page">
-    <img src="/pages/000PWA.png" alt="Privacy PWA" loading="eager" decoding="async">
-    <div class="back-area" onclick="window.location.href='/'" title="Back to main"></div>
-  </section>
-</main>
+<main class="reader" id="reader" aria-label="Privacy reader"></main>
 
 <script>
+  const reader = document.getElementById('reader');
+
+  function initPrivacyPage() {
+    reader.innerHTML = '';
+
+    const section = document.createElement('section');
+    section.className = 'page active';
+    section.setAttribute('aria-label', '000PWA page');
+
+    const img = document.createElement('img');
+    img.src = '/pages/000PWA.png';
+    img.alt = 'Privacy PWA';
+    img.loading = 'eager';
+    img.decoding = 'async';
+    
+    section.appendChild(img);
+    reader.appendChild(section);
+  }
+
+  // Klik of tik ergens om terug te gaan naar de hoofdindex
+  document.addEventListener("pointerup", function () {
+    window.location.href = '/';
+  });
+
   window.addEventListener('keydown', (e) => {
-    if (['Escape', 'ArrowLeft', 'ArrowUp', ' '].includes(e.key)) {
+    if (['Escape', 'ArrowLeft', 'ArrowUp', ' ', 'ArrowRight', 'ArrowDown', 'Enter'].includes(e.key)) {
       e.preventDefault();
       window.location.href = '/';
     }
   });
+
+  initPrivacyPage();
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
