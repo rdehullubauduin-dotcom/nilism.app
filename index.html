@@ -87,7 +87,7 @@
   let previousIndex = 0;
   let isViewingPrivacy = false;
 
-  // Hulpfunctie om een array (de 50 verzen) willekeurig te schudden (Fisher-Yates shuffle)
+  // Hulpfunctie om een array willekeurig te schudden (Fisher-Yates shuffle)
   function shuffleArray(array) {
     let arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -97,10 +97,10 @@
     return arr;
   }
 
-  // Genereer een volledige geschudde batch van 50 bestandsnamen (002PWA.png t/m 51PWA.png)
+  // Genereer een volledige geschudde batch van alle beschikbare verzen (002PWA.png t/m 057PWA.png)
   function generateNewBatch() {
     let batch = [];
-    for (let i = 2; i <= 51; i++) {
+    for (let i = 2; i <= 57; i++) {
       const padded = String(i).padStart(3, '0');
       batch.push(`${padded}PWA.png`);
     }
@@ -110,11 +110,10 @@
   let currentBatch = [];
 
   function getNextPageFileName() {
-    // Als onze huidige batch leeg is, maken we direct een nieuwe geschudde batch van 50
     if (currentBatch.length === 0) {
       currentBatch = generateNewBatch();
     }
-    return currentBatch.shift(); // Pak de eerste van de geschudde lijst en haal hem weg
+    return currentBatch.shift();
   }
 
   function initReader() {
@@ -156,7 +155,6 @@
     reader.appendChild(startSection);
     bookPagesList = [startSection];
 
-    // Reset de batch en zorg dat 001PWA niet direct in de eerste batch zit (of in ieder geval niet dubbel opvalt)
     currentBatch = generateNewBatch();
 
     const privacySection = document.createElement('section');
