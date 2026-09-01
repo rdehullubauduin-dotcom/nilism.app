@@ -97,10 +97,10 @@
     return arr;
   }
 
-  // Genereer een volledige geschudde batch van alle beschikbare verzen (002PWA.png t/m 057PWA.png)
+  // Genereer een volledige geschudde batch van verzen 002PWA.png t/m 055PWA.png
   function generateNewBatch() {
     let batch = [];
-    for (let i = 2; i <= 57; i++) {
+    for (let i = 2; i <= 55; i++) {
       const padded = String(i).padStart(3, '0');
       batch.push(`${padded}PWA.png`);
     }
