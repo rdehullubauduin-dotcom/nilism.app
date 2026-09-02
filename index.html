@@ -123,6 +123,7 @@
     const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
 
     if (isLiveDomain) {
+      // 1. Laad de Preview Gate (PWA.png) als hoofdpagina op het live domein
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
@@ -137,26 +138,26 @@
       reader.appendChild(section);
       bookPagesList = [section];
       currentIndex = 0;
-      return;
+    } else {
+      // Start lokaal met 001PWA.png
+      const startSection = document.createElement('section');
+      startSection.className = 'page active';
+      startSection.setAttribute('aria-label', 'Page 001PWA');
+
+      const startImg = document.createElement('img');
+      startImg.src = '/pages/001PWA.png';
+      startImg.alt = 'Page 001PWA';
+      startImg.loading = 'eager';
+      startImg.decoding = 'async';
+      
+      startSection.appendChild(startImg);
+      reader.appendChild(startSection);
+      bookPagesList = [startSection];
+      currentBatch = generateNewBatch();
+      currentIndex = 0;
     }
 
-    // Start altijd met 001PWA.png als eerste pagina voor lokale testomgevingen
-    const startSection = document.createElement('section');
-    startSection.className = 'page active';
-    startSection.setAttribute('aria-label', 'Page 001PWA');
-
-    const startImg = document.createElement('img');
-    startImg.src = '/pages/001PWA.png';
-    startImg.alt = 'Page 001PWA';
-    startImg.loading = 'eager';
-    startImg.decoding = 'async';
-    
-    startSection.appendChild(startImg);
-    reader.appendChild(startSection);
-    bookPagesList = [startSection];
-
-    currentBatch = generateNewBatch();
-
+    // 2. Maak de Privacy Pagina (000PWA.png) altijd klaar op de achtergrond voor overal
     const privacySection = document.createElement('section');
     privacySection.className = 'page';
     privacySection.setAttribute('aria-label', 'Privacy Page 000PWA');
@@ -170,8 +171,6 @@
     privacySection.appendChild(privacyImg);
     reader.appendChild(privacySection);
     privacyPageElement = privacySection;
-
-    currentIndex = 0;
   }
 
   function addNextRandomPage() {
@@ -197,9 +196,13 @@
     if (e.target.closest('.gift-link')) return;
     if (!bookPagesList.length) return;
 
+    const hostname = window.location.hostname;
+    const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
+    // Dubbele tik detectie (werkt nu overal, inclusief live domein voor de privacy pagina)
     if (timeDiff < 300 && timeDiff > 0) {
       if (isViewingPrivacy) {
         privacyPageElement.classList.remove('active');
@@ -228,6 +231,9 @@
       return;
     }
 
+    // Op het live domein blokkeren we het doorbladeren van de willekeurige verzen (want daar staat alleen de preview gate)
+    if (isLiveDomain) return;
+
     bookPagesList[currentIndex].classList.remove('active');
 
     if (e.clientX < window.innerWidth / 2) {
@@ -246,6 +252,9 @@
 
   window.addEventListener('keydown', (e) => {
     if (!bookPagesList.length) return;
+    const hostname = window.location.hostname;
+    const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+    if (isLiveDomain) return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
