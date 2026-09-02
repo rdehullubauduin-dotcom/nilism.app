@@ -140,7 +140,7 @@
       return;
     }
 
-    // Start altijd met 001PWA.png als eerste pagina
+    // Start altijd met 001PWA.png als eerste pagina voor lokale testomgevingen
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
@@ -197,9 +197,6 @@
     if (e.target.closest('.gift-link')) return;
     if (!bookPagesList.length) return;
 
-    const hostname = window.location.hostname;
-    if (hostname === 'nilism.app' || hostname === 'www.nilism.app') return;
-
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
@@ -249,8 +246,6 @@
 
   window.addEventListener('keydown', (e) => {
     if (!bookPagesList.length) return;
-    const hostname = window.location.hostname;
-    if (hostname === 'nilism.app' || hostname === 'www.nilism.app') return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
