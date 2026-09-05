@@ -1,34 +1,31 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
-      "source": "/pages/(.*)",
+      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, max-age=0"
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
         },
         {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
+          "key": "Pragma",
+          "value": "no-cache"
         },
         {
-          "key": "Vercel-CDN-Cache-Control",
-          "value": "no-store"
+          "key": "Expires",
+          "value": "0"
         }
       ]
     },
     {
       "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/index.html",
       "headers": [
         {
           "key": "Cache-Control",
