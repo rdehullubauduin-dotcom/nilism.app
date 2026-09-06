@@ -132,7 +132,21 @@
   function checkIsLiveLocked() {
     const hostname = window.location.hostname;
     const urlParams = new URLSearchParams(window.location.search);
-    const hasAccessKey = urlParams.get('key') === 'nil_access_2026';
+    
+    // Controleer of de sleutel in de URL staat
+    if (urlParams.get('key') === 'nil_access_2026') {
+      try {
+        localStorage.setItem('nil_unlocked', 'true');
+      } catch (e) {}
+    }
+
+    // Als de sleutel in de URL staat OF al eens eerder is opgeslagen in localStorage: ontgrendelen!
+    let hasStoredAccess = false;
+    try {
+      hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
+    } catch (e) {}
+
+    const hasAccessKey = urlParams.get('key') === 'nil_access_2026' || hasStoredAccess;
     return (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com') && !hasAccessKey;
   }
 
