@@ -1,9 +1,32 @@
-html, body {
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>nilism</title>
+<meta name="description" content="Nilism philosophy presents the paradigm of nothingness centralizing endlessness, with science-inspired 18-word aphorism-poems to recenter, rebalance and reconnect.">
+<meta name="google-site-verification" content="tkz5ykcsEPMp798Gnum3uzv1gt_T1SPWZHDFfnoCtEo" />
+<meta property="og:title" content="nilism">
+<meta property="og:description" content="Nilism philosophy presents the paradigm of nothingness centralizing endlessness, with science-inspired 18-word aphorism-poems to recenter, rebalance and reconnect.">
+<meta property="og:type" content="website">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="nilism">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<style>
+  :root { --bg: #ffffff; --fg: #000000; }
+  * { box-sizing: border-box; }
+
+  html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-    position: fixed; /* Voorkomt 'rubber-band' scrollen en layout-crashes op iOS */
+    position: fixed;
     overflow: hidden;
     background-color: #ffffff;
     user-select: none;
@@ -11,12 +34,22 @@ html, body {
     touch-action: manipulation;
   }
 
+  .reader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+  }
+
   .page {
     position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh; /* Fallback voor oudere iOS versies */
+    height: 100vh;
     height: 100dvh;
     display: flex;
     justify-content: center;
@@ -46,3 +79,216 @@ html, body {
     display: block;
     margin: auto;
   }
+</style>
+</head>
+
+<body>
+
+<main class="reader" id="reader" aria-label="Book reader"></main>
+
+<script>
+  const reader = document.getElementById('reader');
+  let bookPagesList = []; 
+  let privacyPageElement = null; 
+  let currentIndex = 0;
+  let previousIndex = 0;
+  let isViewingPrivacy = false;
+
+  function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function generateNewBatch() {
+    let batch = [];
+    for (let i = 2; i <= 61; i++) {
+      const padded = String(i).padStart(3, '0');
+      batch.push(`${padded}PWA.png`);
+    }
+    return shuffleArray(batch);
+  }
+
+  let currentBatch = [];
+
+  function getNextPageFileName() {
+    if (currentBatch.length === 0) {
+      currentBatch = generateNewBatch();
+    }
+    return currentBatch.shift();
+  }
+
+  function initReader() {
+    reader.innerHTML = '';
+    
+    const hostname = window.location.hostname;
+    const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+
+    if (isLiveDomain) {
+      const section = document.createElement('section');
+      section.className = 'page active';
+      section.setAttribute('aria-label', 'Preview gate');
+
+      const img = document.createElement('img');
+      img.src = '/pages/PWA.png';
+      img.alt = 'Preview gate';
+      img.loading = 'eager';
+      img.decoding = 'async';
+      
+      section.appendChild(img);
+      reader.appendChild(section);
+      bookPagesList = [section];
+      currentIndex = 0;
+    } else {
+      const startSection = document.createElement('section');
+      startSection.className = 'page active';
+      startSection.setAttribute('aria-label', 'Page 001PWA');
+
+      const startImg = document.createElement('img');
+      startImg.src = '/pages/001PWA.png';
+      startImg.alt = 'Page 001PWA';
+      startImg.loading = 'eager';
+      startImg.decoding = 'async';
+      
+      startSection.appendChild(startImg);
+      reader.appendChild(startSection);
+      bookPagesList = [startSection];
+      currentBatch = generateNewBatch();
+      currentIndex = 0;
+    }
+
+    const privacySection = document.createElement('section');
+    privacySection.className = 'page';
+    privacySection.setAttribute('aria-label', 'Privacy Page 000PWA');
+
+    const privacyImg = document.createElement('img');
+    privacyImg.src = '/pages/000PWA.png';
+    privacyImg.alt = 'Privacy Page 000PWA';
+    privacyImg.loading = 'lazy';
+    privacyImg.decoding = 'async';
+
+    privacySection.appendChild(privacyImg);
+    reader.appendChild(privacySection);
+    privacyPageElement = privacySection;
+  }
+
+  function addNextRandomPage() {
+    const fileName = getNextPageFileName();
+    const section = document.createElement('section');
+    section.className = 'page';
+    section.setAttribute('aria-label', `Page ${fileName}`);
+
+    const img = document.createElement('img');
+    img.src = `/pages/${fileName}`;
+    img.alt = `Page ${fileName}`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+
+    section.appendChild(img);
+    reader.appendChild(section);
+    bookPagesList.push(section);
+  }
+
+  let lastClickTime = 0;
+
+  window.addEventListener("click", (e) => {
+    if (e.target.closest('.gift-link')) return;
+    if (!bookPagesList.length) return;
+
+    const hostname = window.location.hostname;
+    const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+
+    if (timeDiff < 300 && timeDiff > 0) {
+      if (isViewingPrivacy) {
+        privacyPageElement.classList.remove('active');
+        currentIndex = previousIndex;
+        bookPagesList[currentIndex].classList.add('active');
+        isViewingPrivacy = false;
+      } else {
+        previousIndex = currentIndex;
+        if (!isViewingPrivacy) {
+          bookPagesList[currentIndex].classList.remove('active');
+        }
+        privacyPageElement.classList.add('active');
+        isViewingPrivacy = true;
+      }
+      lastClickTime = 0;
+      return;
+    }
+
+    lastClickTime = currentTime;
+
+    if (isViewingPrivacy) {
+      privacyPageElement.classList.remove('active');
+      currentIndex = previousIndex;
+      bookPagesList[currentIndex].classList.add('active');
+      isViewingPrivacy = false;
+      return;
+    }
+
+    if (isLiveDomain) return;
+
+    bookPagesList[currentIndex].classList.remove('active');
+
+    if (e.clientX < window.innerWidth / 2) {
+      if (currentIndex > 0) {
+        currentIndex--;
+      }
+    } else {
+      currentIndex++;
+      if (currentIndex >= bookPagesList.length) {
+        addNextRandomPage();
+      }
+    }
+
+    bookPagesList[currentIndex].classList.add('active');
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (!bookPagesList.length) return;
+    const hostname = window.location.hostname;
+    const isLiveDomain = hostname === 'nilism.app' || hostname === 'www.nilism.app';
+    if (isLiveDomain) return;
+
+    if (isViewingPrivacy) {
+      privacyPageElement.classList.remove('active');
+      currentIndex = previousIndex;
+      bookPagesList[currentIndex].classList.add('active');
+      isViewingPrivacy = false;
+      return;
+    }
+
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) {
+      e.preventDefault();
+      bookPagesList[currentIndex].classList.remove('active');
+      currentIndex++;
+      if (currentIndex >= bookPagesList.length) {
+        addNextRandomPage();
+      }
+      bookPagesList[currentIndex].classList.add('active');
+    } else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) {
+      e.preventDefault();
+      if (currentIndex > 0) {
+        bookPagesList[currentIndex].classList.remove('active');
+        currentIndex--;
+        bookPagesList[currentIndex].classList.add('active');
+      }
+    }
+  });
+
+  initReader();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
