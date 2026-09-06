@@ -2,13 +2,13 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      "source": "/((?!api|_next/static|_next/image|favicon.ico|pages/).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
+      "source": "/((?!_next/static|_next/image|favicon.ico|pages/).*)",
       "headers": [
         {
           "key": "Cache-Control",
