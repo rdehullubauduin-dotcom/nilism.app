@@ -121,13 +121,19 @@
     return currentBatch.shift();
   }
 
+  function checkIsLiveLocked() {
+    const hostname = window.location.hostname;
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasAccessKey = urlParams.get('key') === 'nil_access_2026';
+    return (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com') && !hasAccessKey;
+  }
+
   function initReader() {
     reader.innerHTML = '';
     
-    const hostname = window.location.hostname;
-    const isLiveDomain = hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com';
+    const isLiveLocked = checkIsLiveLocked();
 
-    if (isLiveDomain) {
+    if (isLiveLocked) {
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
@@ -198,8 +204,7 @@
     if (e.target.closest('.gift-link')) return;
     if (!bookPagesList.length) return;
 
-    const hostname = window.location.hostname;
-    const isLiveDomain = hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com';
+    const isLiveLocked = checkIsLiveLocked();
 
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
@@ -232,7 +237,7 @@
       return;
     }
 
-    if (isLiveDomain) return;
+    if (isLiveLocked) return;
 
     bookPagesList[currentIndex].classList.remove('active');
 
@@ -252,9 +257,8 @@
 
   window.addEventListener('keydown', (e) => {
     if (!bookPagesList.length) return;
-    const hostname = window.location.hostname;
-    const isLiveDomain = hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com';
-    if (isLiveDomain) return;
+    const isLiveLocked = checkIsLiveLocked();
+    if (isLiveLocked) return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
