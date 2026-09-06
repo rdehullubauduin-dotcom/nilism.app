@@ -34,5 +34,8 @@ self.addEventListener("fetch", (event) => {
         cache: "no-store"
       })
     );
+  } else {
+    // Vangnet voor alle overige interne requests (cruciaal voor iOS standalone modus)
+    event.respondWith(fetch(request));
   }
 });
