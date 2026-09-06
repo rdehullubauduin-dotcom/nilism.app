@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>nil-ism | The Paradigm of Nothingness</title>
+<title>nil-ism</title>
 <meta name="description" content="Nil-ism philosophy presents the paradigm of nothingness centralizing endlessness, with science-inspired 18-word aphorism-poems to recenter, rebalance and reconnect.">
 <link rel="canonical" href="https://nil-ism.com/">
 <meta name="google-site-verification" content="Ikd97b_AZ7clYKgICPn98vXXeCoyux3VQyIzA26IyuU" />
@@ -95,6 +95,17 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
+  // Vang de URL-parameter direct af vóórdat de pagina verder laadt en sla deze op in localStorage
+  (function() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const key = params.get('key');
+      if (key === 'nil_access_2026') {
+        localStorage.setItem('nil_unlocked', 'true');
+      }
+    } catch (e) {}
+  })();
+
   const reader = document.getElementById('reader');
   let bookPagesList = []; 
   let privacyPageElement = null; 
