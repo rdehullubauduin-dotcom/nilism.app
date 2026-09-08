@@ -114,23 +114,22 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    // 1. Als de sleutel in de URL staat, direct opslaan en ontgrendelen
     if (urlParams.get('key') === 'nil_access_2026') {
       try {
         localStorage.setItem('nil_unlocked', 'true');
       } catch (e) {}
+      return false; // Ontgrendeld
     }
 
-    let hasStoredAccess = false;
+    // 2. Check of het al eens eerder is opgeslagen in localStorage
     try {
-      hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
+      if (localStorage.getItem('nil_unlocked') === 'true') {
+        return false; // Ontgrendeld
+      }
     } catch (e) {}
 
-    // Alleen ontgrendelen als de sleutel in URL staat of in localStorage zit
-    if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
-      return false;
-    }
-
-    // Anders: ALTIJD OP SLOT
+    // 3. In alle andere gevallen: HARD OP SLOT
     return true;
   }
 
@@ -180,7 +179,7 @@
       reader.appendChild(section);
       bookPagesList = [section];
       currentIndex = 0;
-      return; // STOP HIER HIEROVER KAN GEEN TWIJFEL BESTAAN
+      return; // STOP HIER: de rest van de site wordt niet geladen
     }
 
     // Alleen bereikbaar bij geldige sleutel:
