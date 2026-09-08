@@ -112,11 +112,10 @@
     margin: auto;
   }
 
-  /* Onzichtbare/subtiele klikbare zone exact over het woord "subscribe" onderin de PWA.png */
+  /* Onzichtbare/subtiele klikbare zone exact over het woord "subscribe" (één regel hoger gezet) */
   .subscribe-link {
     position: absolute;
-    /* Pas deze percentages eventueel subtiel aan op basis van hoe de nieuwe PWA.png schaalt */
-    bottom: 12%; 
+    bottom: 17%; 
     left: 50%;
     transform: translateX(-50%);
     width: 35%;
@@ -197,7 +196,6 @@
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
 
-      // Wikkel de afbeelding en de klikbare abonneer-link in een container
       const gateContainer = document.createElement('div');
       gateContainer.className = 'gate-container';
 
@@ -323,7 +321,6 @@
   }
 
   window.addEventListener("click", (e) => {
-    // Voorkom dat kliks op de subscribe link de normale reader-interactie triggeren als de app op slot staat
     if (checkIsLiveLocked()) return;
     handleInteraction(e.clientX);
   });
