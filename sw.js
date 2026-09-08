@@ -1,37 +1,36 @@
-self.addEventListener("install", () => {
+const CACHE_NAME = 'nil-ism-cache-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/pages/PWA.png',
+  '/pages/000PWA.png',
+  '/pages/001PWA.png',
+  '/icon-192.png'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => caches.delete(key)))
-    )
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
   );
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-  const request = event.request;
-  const url = new URL(request.url);
-
-  if (request.method !== "GET") return;
-  if (url.origin !== self.location.origin) return;
-
-  if (
-    request.mode === "navigate" ||
-    url.pathname === "/" ||
-    url.pathname === "/index.html" ||
-    url.pathname === "/manifest.json" ||
-    url.pathname === "/sw.js" ||
-    url.pathname.startsWith("/pages/")
-  ) {
-    event.respondWith(
-      fetch(request, {
-        cache: "no-store"
-      })
-    );
-  } else {
-    event.respondWith(fetch(request));
-  }
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
 });
