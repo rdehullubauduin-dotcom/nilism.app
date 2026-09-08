@@ -151,14 +151,15 @@
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
     } catch (e) {}
 
+    // Als de juiste sleutel in de URL staat of opgeslagen zit, ontgrendelen
     if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
       return false;
     }
 
-    // Zorg dat de site op de live domeinen altijd op slot staat (toont PWA.png) tenzij ontgrendeld
-    const hostname = window.location.hostname;
-    const isProduction = (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
-    return isProduction;
+    // VOORLOPIG / PRODUCTIE: Altijd op slot (toon PWA.png) tenzij ontgrendeld met de sleutel!
+    // Wil je lokaal op je eigen pc (localhost) wel kunnen testen zonder sleutel? 
+    // Dan kun je hieronder 'localhost' eventueel toestaan, maar nu staat hij altijd dicht:
+    return true;
   }
 
   function initReader() {
