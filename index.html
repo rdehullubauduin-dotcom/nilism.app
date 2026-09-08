@@ -144,14 +144,12 @@
     const hostname = window.location.hostname;
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Controleer of de sleutel in de URL staat
     if (urlParams.get('key') === 'nil_access_2026') {
       try {
         localStorage.setItem('nil_unlocked', 'true');
       } catch (e) {}
     }
 
-    // Als de sleutel in de URL staat OF al eens eerder is opgeslagen in localStorage: ontgrendelen!
     let hasStoredAccess = false;
     try {
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
@@ -180,7 +178,6 @@
       section.appendChild(img);
       reader.appendChild(section);
       bookPagesList = [section];
-      currentIndex = 0;
     } else {
       const startSection = document.createElement('section');
       startSection.className = 'page active';
@@ -196,8 +193,9 @@
       reader.appendChild(startSection);
       bookPagesList = [startSection];
       currentBatch = generateNewBatch();
-      currentIndex = 0;
     }
+
+    currentIndex = 0;
 
     const privacySection = document.createElement('section');
     privacySection.className = 'page';
@@ -233,26 +231,21 @@
 
   let lastClickTime = 0;
 
-  window.addEventListener("click", (e) => {
-    if (e.target.closest('.gift-link')) return;
+  function handlePageTurn(clientX) {
     if (!bookPagesList.length) return;
 
     const isLiveLocked = checkIsLiveLocked();
-
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
 
     if (timeDiff < 300 && timeDiff > 0) {
       if (isViewingPrivacy) {
         privacyPageElement.classList.remove('active');
-        currentIndex = previousIndex;
-        bookPagesList[currentIndex].classList.add('active');
         isViewingPrivacy = false;
+        bookPagesList[currentIndex].classList.add('active');
       } else {
         previousIndex = currentIndex;
-        if (!isViewingPrivacy) {
-          bookPagesList[currentIndex].classList.remove('active');
-        }
+        bookPagesList[currentIndex].classList.remove('active');
         privacyPageElement.classList.add('active');
         isViewingPrivacy = true;
       }
@@ -264,9 +257,8 @@
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
-      currentIndex = previousIndex;
-      bookPagesList[currentIndex].classList.add('active');
       isViewingPrivacy = false;
+      bookPagesList[currentIndex].classList.add('active');
       return;
     }
 
@@ -274,7 +266,7 @@
 
     bookPagesList[currentIndex].classList.remove('active');
 
-    if (e.clientX < window.innerWidth / 2) {
+    if (clientX < window.innerWidth / 2) {
       if (currentIndex > 0) {
         currentIndex--;
       }
@@ -286,7 +278,19 @@
     }
 
     bookPagesList[currentIndex].classList.add('active');
+  }
+
+  window.addEventListener("click", (e) => {
+    if (e.target.closest('.gift-link')) return;
+    handlePageTurn(e.clientX);
   });
+
+  window.addEventListener("touchend", (e) => {
+    if (e.target.closest('.gift-link')) return;
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      handlePageTurn(e.changedTouches[0].clientX);
+    }
+  }, { passive: true });
 
   window.addEventListener('keydown', (e) => {
     if (!bookPagesList.length) return;
@@ -295,9 +299,8 @@
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
-      currentIndex = previousIndex;
-      bookPagesList[currentIndex].classList.add('active');
       isViewingPrivacy = false;
+      bookPagesList[currentIndex].classList.add('active');
       return;
     }
 
