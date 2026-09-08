@@ -95,19 +95,12 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
-  // NOODGREEP: Sloop direct elke actieve service worker en cache die de boel gijzelt
+  // Service Worker registreren zodat PWA installatie mogelijk blijft
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for(let registration of registrations) {
-        registration.unregister();
-      }
-    });
-  }
-  if ('caches' in window) {
-    caches.keys().then(function(names) {
-      for (let name of names) {
-        caches.delete(name);
-      }
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.log('SW registration failed: ', err);
+      });
     });
   }
 
@@ -120,12 +113,21 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Alleen open als de sleutel NU exact in de URL staat
+    // Ontgrendel direct als de sleutel in de URL staat
     if (urlParams.get('key') === 'nil_access_2026') {
-      return false; // Ontgrendeld
+      try {
+        localStorage.setItem('nil_unlocked', 'true');
+      } catch (e) {}
+      return false;
     }
 
-    // In alle andere gevallen: HARD OP SLOT
+    // Onthoud de ontgrendeling voor de geïnstalleerde PWA-sessie
+    try {
+      if (localStorage.getItem('nil_unlocked') === 'true') {
+        return false;
+      }
+    } catch (e) {}
+
     return true;
   }
 
@@ -159,14 +161,13 @@
   function initReader() {
     reader.innerHTML = '';
     
-    // Als hij op slot staat, tonen we ALLEEN PWA.png en stoppen we direct.
     if (checkIsLiveLocked()) {
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
 
       const img = document.createElement('img');
-      img.src = '/pages/PWA.png?v=2026';
+      img.src = '/pages/PWA.png';
       img.alt = 'Preview gate';
       img.loading = 'eager';
       img.decoding = 'async';
@@ -178,7 +179,6 @@
       return;
     }
 
-    // Alleen bereikbaar als de URL-sleutel klopt:
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
