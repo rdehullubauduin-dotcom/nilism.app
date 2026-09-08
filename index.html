@@ -95,7 +95,7 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
-  // Service Worker registreren zodat PWA installeerbaar blijft en werkt als app
+  // Service Worker registreren zodat PWA installeerbaar blijft
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -113,7 +113,6 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Als de sleutel in de URL staat, ontgrendelen en opslaan voor de PWA-sessie
     if (urlParams.get('key') === 'nil_access_2026') {
       try {
         localStorage.setItem('nil_unlocked', 'true');
@@ -121,14 +120,12 @@
       return false; 
     }
 
-    // Als de app eerder is ontgrendeld (nodig voor de geïnstalleerde PWA op je startscherm)
     try {
       if (localStorage.getItem('nil_unlocked') === 'true') {
         return false; 
       }
     } catch (e) {}
 
-    // In alle andere gevallen op slot
     return true;
   }
 
