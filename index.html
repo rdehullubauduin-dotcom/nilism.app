@@ -111,10 +111,19 @@
 
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
-    // De site is alleen open als de sleutel exact in de URL staat
+    
+    // 1. Ontgrendel als de sleutel in de URL staat
     if (urlParams.get('key') === 'nil_access_2026') {
       return false; 
     }
+
+    // 2. Ontgrendel automatisch als de app is geïnstalleerd en gedraaid wordt als PWA (standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      return false;
+    }
+
+    // Anders op slot
     return true;
   }
 
