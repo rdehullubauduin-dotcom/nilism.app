@@ -95,7 +95,6 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
-  // 1. Directe vangnet voor de sleutel
   (function() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -109,7 +108,6 @@
   let bookPagesList = []; 
   let privacyPageElement = null; 
   let currentIndex = 0;
-  let previousIndex = 0;
   let isViewingPrivacy = false;
 
   function shuffleArray(array) {
@@ -153,15 +151,12 @@
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
     } catch (e) {}
 
-    // Als de sleutel in de URL staat of in localStorage zit, is hij ALTIJD ontgrendeld
     if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
       return false;
     }
 
-    // Anders alleen op slot als we op het echte domein zitten
     const hostname = window.location.hostname;
-    const isProduction = (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
-    return isProduction;
+    return (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
   }
 
   function initReader() {
@@ -219,11 +214,11 @@
 
   function addNextRandomPage() {
     const fileName = getNextPageFileName();
-    const section = document.createElement('section');
+    let section = document.createElement('section');
     section.className = 'page';
     section.setAttribute('aria-label', `Page ${fileName}`);
 
-    const img = document.createElement('img');
+    let img = document.createElement('img');
     img.src = `/pages/${fileName}`;
     img.alt = `Page ${fileName}`;
     img.loading = 'lazy';
@@ -234,31 +229,10 @@
     bookPagesList.push(section);
   }
 
-  let lastClickTime = 0;
-
   function handlePageTurn(clientX) {
     if (!bookPagesList.length) return;
-
     const isLiveLocked = checkIsLiveLocked();
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - lastClickTime;
-
-    if (timeDiff < 300 && timeDiff > 0) {
-      if (isViewingPrivacy) {
-        privacyPageElement.classList.remove('active');
-        isViewingPrivacy = false;
-        bookPagesList[currentIndex].classList.add('active');
-      } else {
-        previousIndex = currentIndex;
-        bookPagesList[currentIndex].classList.remove('active');
-        privacyPageElement.classList.add('active');
-        isViewingPrivacy = true;
-      }
-      lastClickTime = 0;
-      return;
-    }
-
-    lastClickTime = currentTime;
+    if (isLiveLocked) return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
@@ -266,8 +240,6 @@
       bookPagesList[currentIndex].classList.add('active');
       return;
     }
-
-    if (isLiveLocked) return;
 
     bookPagesList[currentIndex].classList.remove('active');
 
@@ -285,13 +257,17 @@
     bookPagesList[currentIndex].classList.add('active');
   }
 
+  // Voorkom dubbele firing door te checken op het laatste touch/klik moment
+  let lastTouchTime = 0;
+
   window.addEventListener("click", (e) => {
-    if (e.target.closest('.gift-link')) return;
+    const now = Date.now();
+    if (now - lastTouchTime < 500) return; // Negeer klik als deze direct na een touchend komt
     handlePageTurn(e.clientX);
   });
 
   window.addEventListener("touchend", (e) => {
-    if (e.target.closest('.gift-link')) return;
+    lastTouchTime = Date.now();
     if (e.changedTouches && e.changedTouches.length > 0) {
       handlePageTurn(e.changedTouches[0].clientX);
     }
