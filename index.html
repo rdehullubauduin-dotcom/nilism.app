@@ -11,12 +11,12 @@
 <meta property="og:description" content="nil-ism philosophy presents the paradigm of nothing centering everything - by science-inspired 18-word aphorism-poems to recenter rebalance & reconnect">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.nil-ism.com/">
-<meta property="og:image" content="https://nil-ism.com/pages/001PWA.png">
+<meta property="og:image" content="https://nil-ism.com/pages/PWA.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://nil-ism.com/">
 <meta name="twitter:title" content="nil-ism">
 <meta name="twitter:description" content="nil-ism philosophy presents the paradigm of nothing centering everything - by science-inspired 18-word aphorism-poems to recenter rebalance & reconnect">
-<meta name="twitter:image" content="https://nil-ism.com/pages/001PWA.png">
+<meta name="twitter:image" content="https://nil-ism.com/pages/PWA.png">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <meta name="theme-color" content="#ffffff">
@@ -95,6 +95,7 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
+  // Onmiddellijke sleuteldetectie bij laden
   (function() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -109,6 +110,29 @@
   let privacyPageElement = null; 
   let currentIndex = 0;
   let isViewingPrivacy = false;
+
+  function checkIsLiveLocked() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('key') === 'nil_access_2026') {
+      try {
+        localStorage.setItem('nil_unlocked', 'true');
+      } catch (e) {}
+    }
+
+    let hasStoredAccess = false;
+    try {
+      hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
+    } catch (e) {}
+
+    // Alleen ontgrendelen als de sleutel in URL staat of in localStorage zit
+    if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
+      return false;
+    }
+
+    // Anders: ALTIJD OP SLOT
+    return true;
+  }
 
   function shuffleArray(array) {
     let arr = [...array];
@@ -137,41 +161,17 @@
     return currentBatch.shift();
   }
 
-  function checkIsLiveLocked() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.get('key') === 'nil_access_2026') {
-      try {
-        localStorage.setItem('nil_unlocked', 'true');
-      } catch (e) {}
-    }
-
-    let hasStoredAccess = false;
-    try {
-      hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
-    } catch (e) {}
-
-    // Als de juiste sleutel in de URL staat of opgeslagen is, pas dan ontgrendelen
-    if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
-      return false;
-    }
-
-    // HERMETISCH OP SLOT: Altijd true tenzij de sleutel hierboven klopt
-    return true;
-  }
-
   function initReader() {
     reader.innerHTML = '';
     
-    const isLiveLocked = checkIsLiveLocked();
-
-    if (isLiveLocked) {
+    // EXPLICITE CHECK: Als hij op slot staat, tonen we ALLEEN PWA.png en stoppen we direct.
+    if (checkIsLiveLocked()) {
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
 
       const img = document.createElement('img');
-      img.src = '/pages/PWA.png';
+      img.src = '/pages/PWA.png?v=2026';
       img.alt = 'Preview gate';
       img.loading = 'eager';
       img.decoding = 'async';
@@ -180,9 +180,10 @@
       reader.appendChild(section);
       bookPagesList = [section];
       currentIndex = 0;
-      return; // Direct stoppen: de rest van de site wordt niet geladen!
+      return; // STOP HIER HIEROVER KAN GEEN TWIJFEL BESTAAN
     }
 
+    // Alleen bereikbaar bij geldige sleutel:
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
@@ -232,9 +233,7 @@
   }
 
   function handlePageTurn(clientX) {
-    if (!bookPagesList.length) return;
-    const isLiveLocked = checkIsLiveLocked();
-    if (isLiveLocked) return;
+    if (checkIsLiveLocked() || !bookPagesList.length) return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
@@ -262,6 +261,8 @@
   let lastTapTime = 0;
 
   function handleInteraction(clientX) {
+    if (checkIsLiveLocked()) return; // Blokeer interactie als site op slot staat
+
     const now = Date.now();
     const diff = now - lastTapTime;
 
@@ -288,9 +289,7 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (!bookPagesList.length) return;
-    const isLiveLocked = checkIsLiveLocked();
-    if (isLiveLocked) return;
+    if (checkIsLiveLocked() || !bookPagesList.length) return;
 
     if (isViewingPrivacy) {
       privacyPageElement.classList.remove('active');
