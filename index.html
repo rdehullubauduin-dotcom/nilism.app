@@ -155,8 +155,10 @@
       return false;
     }
 
+    // Zorg dat de site op de live domeinen altijd op slot staat (toont PWA.png) tenzij ontgrendeld
     const hostname = window.location.hostname;
-    return (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
+    const isProduction = (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
+    return isProduction;
   }
 
   function initReader() {
@@ -257,14 +259,12 @@
     bookPagesList[currentIndex].classList.add('active');
   }
 
-  // Robuuste dubbele-klik / dubbele-tik detectie voor 000PWA
   let lastTapTime = 0;
 
   function handleInteraction(clientX) {
     const now = Date.now();
     const diff = now - lastTapTime;
 
-    // Als er binnen 350ms twee keer wordt geklikt/getikt
     if (diff < 350 && diff > 0) {
       lastTapTime = 0;
       if (isViewingPrivacy) {
