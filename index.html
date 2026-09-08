@@ -179,23 +179,24 @@
       section.appendChild(img);
       reader.appendChild(section);
       bookPagesList = [section];
-    } else {
-      const startSection = document.createElement('section');
-      startSection.className = 'page active';
-      startSection.setAttribute('aria-label', 'Page 001PWA');
-
-      const startImg = document.createElement('img');
-      startImg.src = '/pages/001PWA.png';
-      startImg.alt = 'Page 001PWA';
-      startImg.loading = 'eager';
-      startImg.decoding = 'async';
-      
-      startSection.appendChild(startImg);
-      reader.appendChild(startSection);
-      bookPagesList = [startSection];
-      currentBatch = generateNewBatch();
+      currentIndex = 0;
+      return; // Direct stoppen: de rest van de site wordt niet geladen!
     }
 
+    const startSection = document.createElement('section');
+    startSection.className = 'page active';
+    startSection.setAttribute('aria-label', 'Page 001PWA');
+
+    const startImg = document.createElement('img');
+    startImg.src = '/pages/001PWA.png';
+    startImg.alt = 'Page 001PWA';
+    startImg.loading = 'eager';
+    startImg.decoding = 'async';
+    
+    startSection.appendChild(startImg);
+    reader.appendChild(startSection);
+    bookPagesList = [startSection];
+    currentBatch = generateNewBatch();
     currentIndex = 0;
 
     const privacySection = document.createElement('section');
