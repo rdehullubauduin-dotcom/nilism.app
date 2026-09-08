@@ -1,33 +1,25 @@
-const CACHE_NAME = 'nil-ism-cache-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/pages/PWA.png',
-  '/pages/000PWA.png',
-  '/pages/001PWA.png',
-  '/icon-192.png'
-];
+const CACHE_NAME = 'nil-ism-gate-v2';
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    })
+    caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
+  // Sla geen enkele HTML of pagina op in de cache; haal het ALTIJD vers op
+  if (event.request.mode === 'navigate' || event.request.url.includes('/pages/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
