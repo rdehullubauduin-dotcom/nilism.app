@@ -111,16 +111,6 @@
     });
   }
 
-  // Onmiddellijke sleuteldetectie bij laden
-  (function() {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('key') === 'nil_access_2026') {
-        localStorage.setItem('nil_unlocked', 'true');
-      }
-    } catch (e) {}
-  })();
-
   const reader = document.getElementById('reader');
   let bookPagesList = []; 
   let privacyPageElement = null; 
@@ -130,19 +120,12 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    // Alleen open als de sleutel NU exact in de URL staat
     if (urlParams.get('key') === 'nil_access_2026') {
-      try {
-        localStorage.setItem('nil_unlocked', 'true');
-      } catch (e) {}
-      return false;
+      return false; // Ontgrendeld
     }
 
-    try {
-      if (localStorage.getItem('nil_unlocked') === 'true') {
-        return false;
-      }
-    } catch (e) {}
-
+    // In alle andere gevallen: HARD OP SLOT
     return true;
   }
 
@@ -176,6 +159,7 @@
   function initReader() {
     reader.innerHTML = '';
     
+    // Als hij op slot staat, tonen we ALLEEN PWA.png en stoppen we direct.
     if (checkIsLiveLocked()) {
       const section = document.createElement('section');
       section.className = 'page active';
@@ -194,6 +178,7 @@
       return;
     }
 
+    // Alleen bereikbaar als de URL-sleutel klopt:
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
