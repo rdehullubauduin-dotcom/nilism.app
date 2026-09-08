@@ -95,12 +95,11 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
-  // Vang de URL-parameter direct af vóórdat de pagina verder laadt en sla deze op in localStorage
+  // 1. Directe vangnet voor de sleutel
   (function() {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const key = params.get('key');
-      if (key === 'nil_access_2026') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('key') === 'nil_access_2026') {
         localStorage.setItem('nil_unlocked', 'true');
       }
     } catch (e) {}
@@ -141,7 +140,6 @@
   }
 
   function checkIsLiveLocked() {
-    const hostname = window.location.hostname;
     const urlParams = new URLSearchParams(window.location.search);
     
     if (urlParams.get('key') === 'nil_access_2026') {
@@ -155,8 +153,15 @@
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
     } catch (e) {}
 
-    const hasAccessKey = urlParams.get('key') === 'nil_access_2026' || hasStoredAccess;
-    return (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com') && !hasAccessKey;
+    // Als de sleutel in de URL staat of in localStorage zit, is hij ALTIJD ontgrendeld
+    if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
+      return false;
+    }
+
+    // Anders alleen op slot als we op het echte domein zitten
+    const hostname = window.location.hostname;
+    const isProduction = (hostname === 'nil-ism.com' || hostname === 'www.nil-ism.com');
+    return isProduction;
   }
 
   function initReader() {
