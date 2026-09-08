@@ -95,6 +95,22 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
+  // NOODGREEP: Sloop direct elke actieve service worker en cache die de boel gijzelt
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.unregister();
+      }
+    });
+  }
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      for (let name of names) {
+        caches.delete(name);
+      }
+    });
+  }
+
   // Onmiddellijke sleuteldetectie bij laden
   (function() {
     try {
@@ -114,22 +130,19 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // 1. Als de sleutel in de URL staat, direct opslaan en ontgrendelen
     if (urlParams.get('key') === 'nil_access_2026') {
       try {
         localStorage.setItem('nil_unlocked', 'true');
       } catch (e) {}
-      return false; // Ontgrendeld
+      return false;
     }
 
-    // 2. Check of het al eens eerder is opgeslagen in localStorage
     try {
       if (localStorage.getItem('nil_unlocked') === 'true') {
-        return false; // Ontgrendeld
+        return false;
       }
     } catch (e) {}
 
-    // 3. In alle andere gevallen: HARD OP SLOT
     return true;
   }
 
@@ -163,7 +176,6 @@
   function initReader() {
     reader.innerHTML = '';
     
-    // EXPLICITE CHECK: Als hij op slot staat, tonen we ALLEEN PWA.png en stoppen we direct.
     if (checkIsLiveLocked()) {
       const section = document.createElement('section');
       section.className = 'page active';
@@ -179,10 +191,9 @@
       reader.appendChild(section);
       bookPagesList = [section];
       currentIndex = 0;
-      return; // STOP HIER: de rest van de site wordt niet geladen
+      return;
     }
 
-    // Alleen bereikbaar bij geldige sleutel:
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
@@ -260,7 +271,7 @@
   let lastTapTime = 0;
 
   function handleInteraction(clientX) {
-    if (checkIsLiveLocked()) return; // Blokeer interactie als site op slot staat
+    if (checkIsLiveLocked()) return;
 
     const now = Date.now();
     const diff = now - lastTapTime;
@@ -316,12 +327,6 @@
   });
 
   initReader();
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
 </script>
 </body>
 </html>
