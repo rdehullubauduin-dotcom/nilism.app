@@ -151,12 +151,12 @@
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
     } catch (e) {}
 
-    // Als de juiste sleutel in de URL staat of opgeslagen zit, geef toegang
+    // Als de juiste sleutel in de URL staat of opgeslagen is, pas dan ontgrendelen
     if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
       return false;
     }
 
-    // Altijd op slot; toont standaard uitsluitend PWA.png
+    // HERMETISCH OP SLOT: Altijd true tenzij de sleutel hierboven klopt
     return true;
   }
 
