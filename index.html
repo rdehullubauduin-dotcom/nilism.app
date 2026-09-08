@@ -151,14 +151,12 @@
       hasStoredAccess = localStorage.getItem('nil_unlocked') === 'true';
     } catch (e) {}
 
-    // Als de juiste sleutel in de URL staat of opgeslagen zit, ontgrendelen
+    // Als de juiste sleutel in de URL staat of opgeslagen zit, geef toegang
     if (urlParams.get('key') === 'nil_access_2026' || hasStoredAccess) {
       return false;
     }
 
-    // VOORLOPIG / PRODUCTIE: Altijd op slot (toon PWA.png) tenzij ontgrendeld met de sleutel!
-    // Wil je lokaal op je eigen pc (localhost) wel kunnen testen zonder sleutel? 
-    // Dan kun je hieronder 'localhost' eventueel toestaan, maar nu staat hij altijd dicht:
+    // Altijd op slot; toont standaard uitsluitend PWA.png
     return true;
   }
 
