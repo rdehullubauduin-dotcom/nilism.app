@@ -95,6 +95,15 @@
 <main class="reader" id="reader" aria-label="Book reader"></main>
 
 <script>
+  // Service Worker registreren zodat PWA installeerbaar blijft en werkt als app
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.log('SW registration failed: ', err);
+      });
+    });
+  }
+
   const reader = document.getElementById('reader');
   let bookPagesList = []; 
   let privacyPageElement = null; 
@@ -104,16 +113,22 @@
   function checkIsLiveLocked() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Alleen open als de juiste sleutel NU in de URL staat
+    // Als de sleutel in de URL staat, ontgrendelen en opslaan voor de PWA-sessie
     if (urlParams.get('key') === 'nil_access_2026') {
-      return false; // Ontgrendeld voor deze sessie
+      try {
+        localStorage.setItem('nil_unlocked', 'true');
+      } catch (e) {}
+      return false; 
     }
 
-    // Geen sleutel in de URL? Direct op slot en alle lokale rommel wissen
+    // Als de app eerder is ontgrendeld (nodig voor de geïnstalleerde PWA op je startscherm)
     try {
-      localStorage.removeItem('nil_unlocked');
+      if (localStorage.getItem('nil_unlocked') === 'true') {
+        return false; 
+      }
     } catch (e) {}
 
+    // In alle andere gevallen op slot
     return true;
   }
 
@@ -147,14 +162,13 @@
   function initReader() {
     reader.innerHTML = '';
     
-    // Als hij op slot staat, tonen we ALLEEN PWA.png en stoppen we direct.
     if (checkIsLiveLocked()) {
       const section = document.createElement('section');
       section.className = 'page active';
       section.setAttribute('aria-label', 'Preview gate');
 
       const img = document.createElement('img');
-      img.src = '/pages/PWA.png?v=2026';
+      img.src = '/pages/PWA.png';
       img.alt = 'Preview gate';
       img.loading = 'eager';
       img.decoding = 'async';
@@ -166,7 +180,6 @@
       return;
     }
 
-    // Alleen bereikbaar als de URL-sleutel klopt:
     const startSection = document.createElement('section');
     startSection.className = 'page active';
     startSection.setAttribute('aria-label', 'Page 001PWA');
