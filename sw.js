@@ -8,7 +8,6 @@ self.addEventListener("activate", (event) => {
       Promise.all(keys.map((key) => caches.delete(key)))
     )
   );
-
   self.clients.claim();
 });
 
@@ -19,8 +18,6 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (url.origin !== self.location.origin) return;
 
-  // Pagina-afbeeldingen, HTML, manifest en service worker:
-  // nooit uit Cache Storage halen.
   if (
     request.mode === "navigate" ||
     url.pathname === "/" ||
@@ -35,7 +32,6 @@ self.addEventListener("fetch", (event) => {
       })
     );
   } else {
-    // Vangnet voor alle overige interne requests (cruciaal voor iOS standalone modus)
     event.respondWith(fetch(request));
   }
 });
