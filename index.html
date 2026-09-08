@@ -112,7 +112,7 @@
     margin: auto;
   }
 
-  /* Klikbaar vlak nu een klein stukje hoger gecorrigeerd voor "subscribe" */
+  /* Klikbaar vlak op de juiste hoogte en grootte voor "subscribe" */
   .subscribe-link {
     position: absolute;
     bottom: 17%; 
@@ -207,7 +207,8 @@
       
       const subLink = document.createElement('a');
       subLink.className = 'subscribe-link';
-      subLink.href = 'https://nil-ism.lemonsqueezy.com/checkout';
+      // Directe product-checkout link van Lemon Squeezy
+      subLink.href = 'https://nil-ism.lemonsqueezy.com/checkout/buy/45861770-de98-4820-8354-000f00cf8337';
       subLink.setAttribute('aria-label', 'Subscribe');
 
       gateContainer.appendChild(img);
