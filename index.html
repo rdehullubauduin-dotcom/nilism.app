@@ -29,6 +29,11 @@
   :root { --bg: #ffffff; --fg: #000000; }
   * { box-sizing: border-box; }
 
+  html {
+    background-color: #ffffff;
+    background: #ffffff;
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -41,6 +46,7 @@
     touch-action: manipulation;
     overflow: hidden;
     position: fixed;
+    padding-top: env(safe-area-inset-top);
   }
 
   .reader {
@@ -306,6 +312,8 @@
       lastTapTime = 0;
       if (isViewingPrivacy) {
         privacyPageElement.classList.remove('active');
+        isViewingPrivacy = false;
+        bookPagesList[currentIndex].classList.add('active');
       } else {
         bookPagesList[currentIndex].classList.remove('active');
         privacyPageElement.classList.add('active');
