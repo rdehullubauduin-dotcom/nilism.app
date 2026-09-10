@@ -1,9 +1,9 @@
 {
   "name": "nil-ism",
   "short_name": "nil-ism",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
-  "start_url": "/",
+  "start_url": "/?key=nil_access_2026",
   "scope": "/",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
